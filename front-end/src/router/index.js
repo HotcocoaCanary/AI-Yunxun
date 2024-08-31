@@ -1,5 +1,4 @@
 import {createRouter, createWebHistory} from 'vue-router'
-import Login from "@/views/Login.vue";
 import Layout from "@/views/Layout.vue";
 import Home from "@/views/home/Home.vue";
 import Chat from "@/views/chat/Chat.vue";
@@ -10,10 +9,6 @@ import Search from "@/views/relation/Search.vue";
 
 //定义路由关系
 const routes = [
-    {
-        path: '/login',
-        component:Login
-    },
     {
         path: '/',
         component: Layout,

@@ -1,11 +1,10 @@
 <script setup>
-import Test from "@/components/Test.vue";
+import Neo4jD3 from "@/components/Neo4jD3.vue";
 </script>
 
 <template>
   <div id="Neo4jD3">
-<!--    <Neo4jD3></Neo4jD3>-->
-    <Test></Test>
+    <Neo4jD3></Neo4jD3>
   </div>
 </template>
 

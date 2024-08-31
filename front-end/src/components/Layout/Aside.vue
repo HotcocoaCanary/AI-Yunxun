@@ -13,7 +13,7 @@ import {ChatRound, House, PieChart, Search, View} from '@element-plus/icons-vue'
         </el-icon>
         <span>首页</span>
       </el-menu-item>
-      <el-sub-menu>
+      <el-sub-menu index="/relation">
         <template #title>
           <el-icon>
             <View/>

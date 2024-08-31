@@ -40,7 +40,7 @@ public class DataToExcel {
             int rowNum = 1;
             for (Paper data : setData) {
                 String citedPmid = data.getPaperSet().stream()
-                        .map(Paper::getPmid) // 返回 Integer
+                        .map(Paper::getName) // 返回 Integer
                         .map(String::valueOf) // 将 Integer 转换为 String
                         .collect(Collectors.joining(","));
                 createRowForPaper(sheet, data, rowNum++, citedPmid);
@@ -75,7 +75,7 @@ public class DataToExcel {
             int rowNum = 1;
             for (Author data : setData) {
                 String paperPmid = data.getPaperSet().stream()
-                        .map(Paper::getPmid) // 返回 Integer
+                        .map(Paper::getName) // 返回 Integer
                         .map(String::valueOf) // 将 Integer 转换为 String
                         .collect(Collectors.joining(","));
                 createRowForAuthor(sheet, data, rowNum++, paperPmid);
@@ -169,7 +169,7 @@ public class DataToExcel {
     private static void createRowForCountry(Sheet sheet, Country data, int rowNum, String institutionName) {
         Row row = sheet.createRow(rowNum);
         row.createCell(0).setCellValue(data.getId()!=null? String.valueOf(data.getId()):"");
-        row.createCell(1).setCellValue(data.getNation());
+        row.createCell(1).setCellValue(data.getName());
         row.createCell(2).setCellValue(""); // CITES
         row.createCell(3).setCellValue(institutionName);
     }
@@ -186,7 +186,7 @@ public class DataToExcel {
     private static void createRowForPaper(Sheet sheet, Paper data, int rowNum, String citedPmid) {
         Row row = sheet.createRow(rowNum);
         row.createCell(0).setCellValue(data.getId() != null ? String.valueOf(data.getId()) : "");
-        row.createCell(1).setCellValue(data.getPmid());
+        row.createCell(1).setCellValue(data.getName());
         row.createCell(2).setCellValue(data.getTitle() != null ? data.getTitle() : "");
         row.createCell(3).setCellValue(data.getDate() != null ? data.getDate() : "");
         row.createCell(4).setCellValue(data.getKeyword() != null ? data.getKeyword() : "");

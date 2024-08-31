@@ -23,7 +23,7 @@ public class Country {
     private Long id;
 
     @NonNull
-    private String nation;
+    private String name;
 
     @Relationship(type = "LOCATED_IN", direction = Relationship.Direction.INCOMING)
     private Set<Institution> institutionSet=new HashSet<>();

@@ -9,4 +9,5 @@ import org.springframework.stereotype.Repository;
  */
 @Repository
 public interface CountryRepository extends Neo4jRepository<Country, Long> {
+    Country findById(long id);
 }

@@ -86,7 +86,7 @@ public class ExcelToData {
                     String cellValue = formatter.formatCellValue(cell);
                     switch (header) {
                         case "pmid":
-                            paper.setPmid(Integer.parseInt(cellValue));
+                            paper.setName(Integer.parseInt(cellValue));
                             break;
                         case "title":
                             paper.setTitle(cellValue);
@@ -195,7 +195,7 @@ public class ExcelToData {
                     String cellValue = formatter.formatCellValue(cell);
                     switch (header) {
                         case "nation":
-                            country.setNation(cellValue);
+                            country.setName(cellValue);
                             break;
                         case "institution_name":
                             Arrays.stream(cellValue.split(","))

@@ -1,70 +1,104 @@
 <template>
-  <body>
-  <div id="neo4j-d3"></div>
-  </body>
+  <div ref="chart" style="width: 600px; height: 400px;"></div>
 </template>
 
 <script>
-import { ref, onMounted } from 'vue';
-import Neo4jd3 from '../assets/js/neo4jd3.js';
+import * as echarts from 'echarts';
 
 export default {
-  name: 'Neo4jD3',
-  setup() {
-    const neo4jData = ref({});
-
-    const fetchData = async () => {
-      try {
-        const response = await fetch('http://localhost:2933/Cloud-Hunt-Chart-backend/query', {
-          method: 'POST',
-        });
-        neo4jData.value = await response.json();
-        console.log(response.json());
-        initGraph();
-      } catch (error) {
-        console.error('加载JSON文件时出错：', error);
-      }
-    };
-
-    const initGraph = () => {
-      new Neo4jd3('#neo4j-d3', {
-        showNodePlate: true,
-        neo4jData: neo4jData.value,
-        highlight: [],
-        highlightRelationShip: [],
-        iconMap: {
-          'rich-text': 'e65f',
+  name: 'EChartsGraph',
+  mounted() {
+    this.initChart();
+  },
+  methods: {
+    initChart() {
+      const chart = echarts.init(this.$refs.chart);
+      const option = {
+        title: {
+          text: '简单知识图谱示例'
         },
-        onMenuNodeClick({name, status, metaData}) {
-          console.log(name, status, metaData);
-        },
-        onGetLegend(data) {
-          console.log(data);
-        },
-        onNodeDoubleClick(e, d, d3) {
-          console.log(e, d, d3);
-        }
-      });
-    };
+        tooltip: {},
+        series: [{
+          type: 'graph',
+          layout: 'force',
+          symbolSize: 45,
+          roam: true,
+          edgeSymbol: ['circle', 'arrow'],
+          edgeSymbolSize: [4, 10],
+          edgeLabel: {
+            normal: {
+              textStyle: {
+                fontSize: 20
+              }
+            }
+          },
+          force: {
+            repulsion: 2500,
+            edgeLength: [10, 50]
+          },
+          draggable: true,
+          itemStyle: {
+            normal: {
+              color: '#4b565b'
+            }
+          },
+          lineStyle: {
+            normal: {
+              width: 2,
+              color: '#e2c08d'
+            }
+          },
+          label: {
+            normal: {
+              show: true,
+              textStyle: {}
+            }
+          },
+          data: [
+            {
+              name: '123',
+              category: 'paper',
+              properties: {
+                "name": "Zhonghua",
+                "Nationality": "China"
+              },
+            },
+            {
+              name: '124',
+              category: 'author',
+              properties: {
+                "name": "Zhonghua",
+                "Nationality": "China"
+              },
+            }
+          ],
+          links: [
+            {
+              source: '123',
+              target: '124',
+              name: "AUTHORED",
+              position: "43422",
+            }
+          ],
+          categories: [
+            {
+              name: 'paper'
+            },
+            {
+              name: 'author'
+            },
+            {
+              name: 'country'
+            },
+            {
+              name: 'institution'
+            }
+          ]
+        }]
+      };
 
-    onMounted(fetchData);
-
-    return {
-      neo4jData
-    };
+      chart.setOption(option);
+    }
   }
-};
+}
 </script>
-
-<style src="../assets/css/neo4jd3.css"></style>
-<style scoped>
-body {
-  margin: 0;
-  width: 100vw;
-  height: 100vh;
-}
-#neo4j-d3 {
-  width: 100%;
-  height: 100%;
-}
-</style>

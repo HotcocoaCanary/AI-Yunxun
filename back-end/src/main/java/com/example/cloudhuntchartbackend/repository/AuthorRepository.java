@@ -12,8 +12,7 @@ import java.util.List;
  */
 @Repository
 public interface AuthorRepository extends Neo4jRepository<Author, Long> {
-    public List<Author> findByNameContaining(String keyword);
+    List<Author> findByNameContaining(String keyword);
 
-    @Query("MATCH (n)-[p*1..2]->(m) RETURN n, p, m")
-    List<Object[]> findRelatedNodesAndRelationships();
+    Author findAuthorById(Long id);
 }

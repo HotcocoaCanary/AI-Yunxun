@@ -6,8 +6,8 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 public class Neo4jController {
 
-    @PostMapping("/search")
-    public void search(){
+    @PostMapping("/query")
+    public void query(){
 
     }
 }

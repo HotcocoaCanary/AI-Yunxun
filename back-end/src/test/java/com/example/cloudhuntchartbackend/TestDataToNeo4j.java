@@ -18,9 +18,9 @@ public class TestDataToNeo4j {
     @Test
     public void test() {
         neo4jService.deleteAll();
-        neo4jService.saveExcelToNeo4j("E:\\Code\\Canary\\AI-Cloud-Hunt-Chart\\back-end\\src\\main\\java\\com\\example\\cloudhuntchartbackend\\data\\paper.xlsx",
-                "E:\\Code\\Canary\\AI-Cloud-Hunt-Chart\\back-end\\src\\main\\java\\com\\example\\cloudhuntchartbackend\\data\\author.xlsx",
-                "E:\\Code\\Canary\\AI-Cloud-Hunt-Chart\\back-end\\src\\main\\java\\com\\example\\cloudhuntchartbackend\\data\\institution.xlsx",
-                "E:\\Code\\Canary\\AI-Cloud-Hunt-Chart\\back-end\\src\\main\\java\\com\\example\\cloudhuntchartbackend\\data\\country.xlsx");
+        neo4jService.saveExcelToNeo4j("E:\\Code\\Canary\\AI-Yunxun\\back-end\\src\\main\\java\\com\\example\\cloudhuntchartbackend\\data\\paper.xlsx",
+                "E:\\Code\\Canary\\AI-Yunxun\\back-end\\src\\main\\java\\com\\example\\cloudhuntchartbackend\\data\\author.xlsx",
+                "E:\\Code\\Canary\\AI-Yunxun\\back-end\\src\\main\\java\\com\\example\\cloudhuntchartbackend\\data\\institution.xlsx",
+                "E:\\Code\\Canary\\AI-Yunxun\\back-end\\src\\main\\java\\com\\example\\cloudhuntchartbackend\\data\\country.xlsx");
     }
 }

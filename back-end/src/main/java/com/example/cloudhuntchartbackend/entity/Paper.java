@@ -20,7 +20,7 @@ public class Paper {
     private Long id;
 
     @NonNull
-    private Integer pmid;
+    private Integer name;
 
     @Property("Title")
     private String title;

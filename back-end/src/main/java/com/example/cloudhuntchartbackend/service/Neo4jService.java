@@ -9,9 +9,14 @@ import com.example.cloudhuntchartbackend.repository.CountryRepository;
 import com.example.cloudhuntchartbackend.repository.InstitutionRepository;
 import com.example.cloudhuntchartbackend.repository.PaperRepository;
 import com.example.cloudhuntchartbackend.utils.ExcelToData;
-import jakarta.annotation.Resource;
+import org.neo4j.driver.Result;
+import org.neo4j.driver.types.MapAccessor;
 import org.springframework.stereotype.Service;
+import jakarta.annotation.Resource;
+import org.neo4j.driver.Driver;
+import org.neo4j.driver.Session;
 
+import java.util.List;
 import java.util.Map;
 
 @Service
@@ -28,6 +33,10 @@ public class Neo4jService {
 
     @Resource
     private InstitutionRepository institutionRepository; // 注意首字母小写
+
+    @Resource
+    private Driver driver;
+
 
     public int addAllPaper(Iterable<Paper> papers) {
         paperRepository.saveAll(papers);
@@ -83,4 +92,10 @@ public class Neo4jService {
         }
     }
 
+    public List<Map<String, Object>> executeCypherQuery(String cypherQuery) {
+        try (Session session = driver.session()) {
+            Result result = session.run(cypherQuery);
+            return result.list(MapAccessor::asMap);
+        }
+    }
 }

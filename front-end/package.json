@@ -12,10 +12,12 @@
     "@element-plus/icons-vue": "^2.3.1",
     "axios": "^1.7.2",
     "d3": "^7.9.0",
+    "echarts": "^5.5.1",
     "element-plus": "^2.7.2",
     "neo4j-driver": "^5.20.0",
     "scss": "^0.2.4",
     "vue": "^3.4.21",
+    "vue-echarts": "^7.0.3",
     "vue-router": "^4.3.2"
   },
   "devDependencies": {
