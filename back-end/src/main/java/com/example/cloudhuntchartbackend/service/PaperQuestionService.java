@@ -2,6 +2,7 @@ package com.example.cloudhuntchartbackend.service;
 
 import opennlp.tools.namefind.NameFinderME;
 import opennlp.tools.namefind.TokenNameFinderModel;
+import opennlp.tools.parser.ParserModel;
 import opennlp.tools.sentdetect.SentenceDetectorME;
 import opennlp.tools.sentdetect.SentenceModel;
 import opennlp.tools.tokenize.TokenizerME;
@@ -19,21 +20,24 @@ public class PaperQuestionService {
 
     private final SentenceDetectorME sentenceDetector;
     private final TokenizerME tokenizer;
-    private final NameFinderME dateFinder;
     private final NameFinderME personFinder;
+    private final NameFinderME locationFinder;
     private final NameFinderME organizationFinder;
+    private final NameFinderME dateFinder;
 
     @Autowired
     public PaperQuestionService(SentenceModel sentenceModel,
                                 TokenizerModel tokenizerModel,
-                                @Qualifier("dateNameFinderModel") TokenNameFinderModel dateFinderModel,
                                 @Qualifier("personNameFinderModel") TokenNameFinderModel personFinderModel,
-                                @Qualifier("organizationNameFinderModel") TokenNameFinderModel organizationFinderModel) {
+                                @Qualifier("locationNameFinderModel") TokenNameFinderModel localNameFinderModel,
+                                @Qualifier("organizationNameFinderModel") TokenNameFinderModel organizationFinderModel,
+                                @Qualifier("dateNameFinderModel") TokenNameFinderModel dateFinderModel) {
         this.sentenceDetector = new SentenceDetectorME(sentenceModel);
         this.tokenizer = new TokenizerME(tokenizerModel);
-        this.dateFinder = new NameFinderME(dateFinderModel);
         this.personFinder = new NameFinderME(personFinderModel);
+        this.locationFinder = new NameFinderME(localNameFinderModel);
         this.organizationFinder = new NameFinderME(organizationFinderModel);
+        this.dateFinder = new NameFinderME(dateFinderModel);
     }
 
     public String answer(String question) {

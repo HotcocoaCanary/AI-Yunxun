@@ -15,4 +15,6 @@ public interface AuthorRepository extends Neo4jRepository<Author, Long> {
     List<Author> findByNameContaining(String keyword);
 
     Author findAuthorById(Long id);
+
+    Author findAuthorByName(String authorName);
 }

@@ -32,7 +32,7 @@ public class Neo4jTest {
     }
 
     @Test
-    public void testNLP() throws JsonProcessingException {
+    public void testNLP() {
         System.out.println(paperQuestionService.answer("What papers has Varrelmann published?"));
     }
 
