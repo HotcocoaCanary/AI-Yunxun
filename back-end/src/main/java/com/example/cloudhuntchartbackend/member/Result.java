@@ -17,8 +17,8 @@ public class Result<T> {
     // 枚举定义状态码和消息
     @Getter
     public enum Status {
-        SUCCESS(0, "操作成功"),
-        ERROR(1, "操作失败");
+        SUCCESS(200, "操作成功"),
+        ERROR(500, "操作失败");
 
         private final Integer code;
         private final String message;
