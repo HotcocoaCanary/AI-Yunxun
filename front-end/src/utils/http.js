@@ -3,7 +3,7 @@ import axios from 'axios';
 
 // 创建一个axios实例
 const http = axios.create({
-    baseURL: 'http://localhost:2933/Cloud-Hunt-Chart-backend/', // 设置API的基础地址
+    baseURL: '/api', // 设置API的基础地址
     timeout: 10000, // 设置请求超时时间
     headers: {
         'Content-Type': 'application/json;charset=UTF-8'
@@ -13,12 +13,9 @@ const http = axios.create({
 // 请求拦截器
 http.interceptors.request.use(
     config => {
-        // 在这里可以添加例如认证令牌(Token)等
-        config.headers.Authorization = 'Your Token';
         return config;
     },
     error => {
-        // 请求错误处理
         return Promise.reject(error);
     }
 );

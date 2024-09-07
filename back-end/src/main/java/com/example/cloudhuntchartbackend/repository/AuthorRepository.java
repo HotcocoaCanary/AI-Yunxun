@@ -6,15 +6,14 @@ import org.springframework.data.neo4j.repository.query.Query;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Map;
 
-/**
- * 接口
- */
 @Repository
 public interface AuthorRepository extends Neo4jRepository<Author, Long> {
-    List<Author> findByNameContaining(String keyword);
 
-    Author findAuthorById(Long id);
-
+    // 根据作者名查询作者
     Author findAuthorByName(String authorName);
+
+    @Query("MATCH (a)-[r]->(b) RETURN a, r, b")
+    List<Map<String, Object>> findAllNodesAndRelationships();
 }

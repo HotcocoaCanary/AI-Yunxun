@@ -16,6 +16,7 @@ import jakarta.annotation.Resource;
 import org.neo4j.driver.Driver;
 import org.neo4j.driver.Session;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -92,10 +93,15 @@ public class Neo4jService {
         }
     }
 
-    public List<Map<String, Object>> executeCypherQuery(String cypherQuery) {
+    public List<Map<String, Object>> executeCypherQueries(List<String> cypherQueries) {
+        List<Map<String, Object>> allResults = new ArrayList<>();
         try (Session session = driver.session()) {
-            Result result = session.run(cypherQuery);
-            return result.list(MapAccessor::asMap);
+            for (String cypherQuery : cypherQueries) {
+                Result result = session.run(cypherQuery);
+                allResults.addAll(result.list(MapAccessor::asMap));
+            }
         }
+        return allResults;
     }
+
 }

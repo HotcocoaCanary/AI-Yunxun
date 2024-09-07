@@ -4,15 +4,56 @@
 
 <script>
 import * as echarts from 'echarts';
+import {getGraph} from "@/api/neo4jService.js";
 
 export default {
   name: 'EChartsGraph',
+  props: {
+    answer: String
+  },
+  data() {
+    return {
+      nodes: [],
+      relationships: [],
+      chart: null
+    };
+  },
+  watch: {
+    answer: {
+      immediate: true,
+      handler(newValue) {
+        if (newValue) {
+          this.fetchData(newValue);
+        }
+      }
+    }
+  },
   mounted() {
     this.initChart();
   },
+  beforeDestroy() {
+    if (this.chart) {
+      this.chart.dispose();
+    }
+  },
   methods: {
+    async fetchData(answer) {
+      try {
+        let data = await getGraph(answer);
+        console.log(data)
+        this.nodes = data.nodes;
+        this.relationships = data.relationships;
+        this.updateChart();
+      } catch (error) {
+        console.error("获取数据出错", error);
+      }
+    },
     initChart() {
-      const chart = echarts.init(this.$refs.chart);
+      this.chart = echarts.init(this.$refs.chart);
+      this.updateChart();
+    },
+    updateChart() {
+      if (!this.chart) return;
       const option = {
         title: {
           text: '简单知识图谱示例'
@@ -26,10 +67,8 @@ export default {
           edgeSymbol: ['circle', 'arrow'],
           edgeSymbolSize: [4, 10],
           edgeLabel: {
-            normal: {
-              textStyle: {
-                fontSize: 20
-              }
+            textStyle: {
+              fontSize: 20
             }
           },
           force: {
@@ -38,48 +77,18 @@ export default {
           },
           draggable: true,
           itemStyle: {
-            normal: {
-              color: '#4b565b'
-            }
+            color: '#4b565b'
           },
           lineStyle: {
-            normal: {
-              width: 2,
-              color: '#e2c08d'
-            }
+            width: 2,
+            color: '#e2c08d'
           },
           label: {
-            normal: {
-              show: true,
-              textStyle: {}
-            }
+            show: true,
+            textStyle: {}
           },
-          data: [
-            {
-              name: '123',
-              category: 'paper',
-              properties: {
-                "name": "Zhonghua",
-                "Nationality": "China"
-              },
-            },
-            {
-              name: '124',
-              category: 'author',
-              properties: {
-                "name": "Zhonghua",
-                "Nationality": "China"
-              },
-            }
-          ],
-          links: [
-            {
-              source: '123',
-              target: '124',
-              name: "AUTHORED",
-              position: "43422",
-            }
-          ],
+          data: this.nodes,
+          links: this.relationships,
           categories: [
             {
               name: 'paper'
@@ -96,8 +105,7 @@ export default {
           ]
         }]
       };
-
-      chart.setOption(option);
+      this.chart.setOption(option);
     }
   }
 }

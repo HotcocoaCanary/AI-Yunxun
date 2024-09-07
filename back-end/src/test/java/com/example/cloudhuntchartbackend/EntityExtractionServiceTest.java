@@ -1,9 +1,9 @@
 package com.example.cloudhuntchartbackend;
 
 import com.example.cloudhuntchartbackend.repository.AuthorRepository;
-import com.example.cloudhuntchartbackend.service.EntityExtractor;
+import com.example.cloudhuntchartbackend.service.EntityExtractorService;
 import com.example.cloudhuntchartbackend.service.Neo4jService;
-import com.example.cloudhuntchartbackend.utils.NormalizedData;
+import com.example.cloudhuntchartbackend.utils.EntityToCypherQuery;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import jakarta.annotation.Resource;
 import org.junit.jupiter.api.Test;
@@ -17,7 +17,7 @@ import java.util.Map;
 public class EntityExtractionServiceTest {
 
     @Autowired
-    private EntityExtractor entityExtractor;
+    private EntityExtractorService entityExtractor;
 
     @Resource
     private Neo4jService neo4jService;
@@ -29,13 +29,10 @@ public class EntityExtractionServiceTest {
     public void test2() throws JsonProcessingException {
         String sentence = "What are the papers written by Varrelmann";
         Map<String, Object> entities = entityExtractor.extractEntityAttributes(sentence);
+        List<String> list = new EntityToCypherQuery().getCypherQuery(entities);
+
 
         System.out.println(entities);
-        System.out.println(authorRepository.findAuthorByName(entities.get("Author").toString()));
-
-        String cypher = "MATCH (n) WHERE n.name='"+entities.get("Author").toString()+"' RETURN n";
-
-        List<Map<String, Object>> maps = neo4jService.executeCypherQuery(cypher);
-        System.out.println(new NormalizedData().processRecords(maps));
+        System.out.println(list);
     }
 }

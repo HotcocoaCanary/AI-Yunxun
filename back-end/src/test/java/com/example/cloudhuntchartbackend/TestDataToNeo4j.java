@@ -15,6 +15,7 @@ public class TestDataToNeo4j {
 
     @Resource
     Neo4jService neo4jService;
+
     @Test
     public void test() {
         neo4jService.deleteAll();

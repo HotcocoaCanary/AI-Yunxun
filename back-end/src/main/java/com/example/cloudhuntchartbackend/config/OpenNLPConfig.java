@@ -5,13 +5,13 @@ import opennlp.tools.parser.ParserModel;
 import opennlp.tools.sentdetect.SentenceModel;
 import opennlp.tools.tokenize.TokenizerModel;
 import org.springframework.context.annotation.Bean;
-import org.springframework.stereotype.Component;
+import org.springframework.context.annotation.Configuration;
 
 import java.io.File;
 import java.io.IOException;
 
-@Component
-public class BinModel {
+@Configuration
+public class OpenNLPConfig {
 
     @Bean
     public SentenceModel sentenceModel() throws IOException {
@@ -35,9 +35,9 @@ public class BinModel {
     public TokenNameFinderModel locationNameFinderModel  () throws IOException {
         return new TokenNameFinderModel(new File("bin/en-ner-location.bin"));
     }
-    @Bean("organizationNameFinderModel")
-    public TokenNameFinderModel organizationNameFinderModel  () throws IOException {
-        return new TokenNameFinderModel(new File("bin/en-ner-organization.bin"));
+    @Bean("institutionNameFinderModel")
+    public TokenNameFinderModel institutionNameFinderModel() throws IOException {
+        return new TokenNameFinderModel(new File("bin/en-ner-institution.bin"));
     }
     @Bean("moneyNameFinderModel")
     public TokenNameFinderModel moneyNameFinderModel  () throws IOException {

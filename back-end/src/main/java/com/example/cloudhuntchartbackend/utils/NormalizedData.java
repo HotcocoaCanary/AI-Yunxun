@@ -2,19 +2,21 @@ package com.example.cloudhuntchartbackend.utils;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.neo4j.driver.types.Node;
 import org.neo4j.driver.types.Path;
 import org.neo4j.driver.types.Relationship;
+import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+@Component
 public class NormalizedData {
-    private final ObjectMapper objectMapper = new ObjectMapper();
 
-    public String processRecords(List<Map<String, Object>> records) throws JsonProcessingException {
+    public ObjectNode normalizedCypher(List<Map<String, Object>> records) throws JsonProcessingException {
         List<Map<String, Object>> nodes = new ArrayList<>();
         List<Map<String, Object>> relationships = new ArrayList<>();
 
@@ -22,11 +24,11 @@ public class NormalizedData {
             processNodeOrRelationship(recordMap, nodes, relationships);
         }
 
-        return objectMapper.writeValueAsString(createJson(nodes, relationships));
+        ObjectMapper objectMapper = new ObjectMapper();
+        return objectMapper.valueToTree(createJson(nodes, relationships));
     }
 
-    private void processNodeOrRelationship(Map<String, Object> recordMap, List<Map<String, Object>> nodes,
-                                           List<Map<String, Object>> relationships) {
+    private void processNodeOrRelationship(Map<String, Object> recordMap, List<Map<String, Object>> nodes, List<Map<String, Object>> relationships) {
         for (Map.Entry<String, Object> entry : recordMap.entrySet()) {
             Object value = entry.getValue();
             if (value instanceof Node) {

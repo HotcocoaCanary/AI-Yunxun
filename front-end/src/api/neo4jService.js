@@ -1,10 +1,11 @@
 import http from '@/utils/http';
 
-export async function search() {
+export async function getGraph(answer) {
     try {
-        const response = await http.post('/search');
-        console.log(response);
+        return await http.post('/answer', {
+            answer: answer
+        });
     } catch (error) {
-        console.error('There was an error!', error);
+        console.error('请求失败', error);
     }
 }
