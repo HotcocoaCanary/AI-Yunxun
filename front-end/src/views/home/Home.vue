@@ -6,7 +6,7 @@
 
 <script setup>
 import { ref } from 'vue';
-import Neo4jD3 from "@/components/Neo4jD3.vue";
+import Neo4jD3 from "@/components/Graph.vue";
 
 const answer = ref("What are the papers written by Varrelmann");
 </script>
