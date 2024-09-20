@@ -48,7 +48,7 @@ public class NormalizedData {
 
     private Map<String, Object> createNodeJson(Node node) {
         Map<String, Object> nodeJson = new HashMap<>();
-        nodeJson.put("name", convertNeo4jValueToString(node.get("name")));
+        nodeJson.put("name", node.id());
         nodeJson.put("properties", convertProperties(node.asMap()));
         nodeJson.put("category", node.labels());
         return nodeJson;

@@ -31,7 +31,6 @@ public class EntityExtractionServiceTest {
         Map<String, Object> entities = entityExtractor.extractEntityAttributes(sentence);
         List<String> list = new EntityToCypherQuery().getCypherQuery(entities);
 
-
         System.out.println(entities);
         System.out.println(list);
     }
