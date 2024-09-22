@@ -14,6 +14,6 @@ const answer = ref("What are the papers written by Varrelmann");
 <style scoped>
 #Neo4jD3 {
   width: 100%;
-  height: 100vh;
+  height: 100%;
 }
 </style>

@@ -6,7 +6,7 @@ import {ChatRound, House, PieChart, Search, View} from '@element-plus/icons-vue'
   <div class="aside">
     <div class="el-aside-logo"></div>
     <!-- element-plus的菜单标签 -->
-    <el-menu active-text-color="#ffd04b" background-color="#232323" text-color="#fff" router>
+    <el-menu active-text-color="#ffd04b" background-color="#1F1F1E" text-color="#fff" router>
       <el-menu-item index="/home">
         <el-icon>
           <House/>
@@ -43,18 +43,21 @@ import {ChatRound, House, PieChart, Search, View} from '@element-plus/icons-vue'
   </div>
 </template>
 
-<style>
+<style scoped>
 .aside {
   height: 100vh;
-  background-color: #232323;
+  width: 250px;
+  background: #1F1F1E;
+  display: flex;
+  flex-direction: column;
+}
 
-  .el-aside-logo {
-    height: 120px;
-    background: url('@/assets/img/logo.png') no-repeat center / 120px auto;
-  }
-
-  el-menu {
-    border-right: none;
-  }
+.el-aside-logo {
+  height: 201px;
+  background: url('@/assets/img/logo.png') no-repeat center center;
+  background-size: contain;
+  width: 100%;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3); /* 添加图片阴影 */
+  border-radius: 8px; /* 添加图片圆角 */
 }
 </style>
