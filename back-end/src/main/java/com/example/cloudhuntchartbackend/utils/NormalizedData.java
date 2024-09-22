@@ -31,20 +31,37 @@ public class NormalizedData {
     private void processNodeOrRelationship(Map<String, Object> recordMap, List<Map<String, Object>> nodes, List<Map<String, Object>> relationships) {
         for (Map.Entry<String, Object> entry : recordMap.entrySet()) {
             Object value = entry.getValue();
-            if (value instanceof Node) {
-                nodes.add(createNodeJson((Node) value));
-            } else if (value instanceof Relationship) {
-                relationships.add(createRelationshipJson((Relationship) value));
-            } else if (value instanceof Path path) {
-                for (Node node : path.nodes()) {
+            if (value instanceof Node node) {
+                if (containsNode(nodes, node.id())) {
                     nodes.add(createNodeJson(node));
                 }
-                for (Relationship relationship : path.relationships()) {
+            } else if (value instanceof Relationship relationship) {
+                if (containsRelationship(relationships, relationship.id())) {
                     relationships.add(createRelationshipJson(relationship));
+                }
+            } else if (value instanceof Path path) {
+                for (Node node : path.nodes()) {
+                    if (containsNode(nodes, node.id())) {
+                        nodes.add(createNodeJson(node));
+                    }
+                }
+                for (Relationship relationship : path.relationships()) {
+                    if (containsRelationship(relationships, relationship.id())) {
+                        relationships.add(createRelationshipJson(relationship));
+                    }
                 }
             }
         }
     }
+
+    private boolean containsNode(List<Map<String, Object>> nodes, Long nodeId) {
+        return nodes.stream().noneMatch(node -> nodeId.equals(node.get("name")));
+    }
+
+    private boolean containsRelationship(List<Map<String, Object>> relationships, Long relationshipId) {
+        return relationships.stream().noneMatch(relationship -> relationshipId.equals(relationship.get("name")));
+    }
+
 
     private Map<String, Object> createNodeJson(Node node) {
         Map<String, Object> nodeJson = new HashMap<>();
