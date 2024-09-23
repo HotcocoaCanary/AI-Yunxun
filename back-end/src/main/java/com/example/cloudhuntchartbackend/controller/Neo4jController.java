@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -41,5 +42,23 @@ public class Neo4jController {
         } catch (JsonProcessingException e) {
             return Result.error("查询错误" + e.getMessage());
         }
+    }
+
+    @PostMapping("/all")
+    public Result<ObjectNode> getAll() {
+        try {
+            String cypherQuery = "MATCH p=()-[]->() RETURN p";
+            List<Map<String, Object>> data = neo4jService.executeCypherQueries(Collections.singletonList(cypherQuery));
+            ObjectNode result = normalizedData.normalizedCypher(data);
+            return Result.success(result);
+        } catch (JsonProcessingException e) {
+            return Result.error("查询错误" + e.getMessage());
+        }
+    }
+
+    @PostMapping("/search")
+    public Result<ObjectNode> search(@RequestBody Map<String, String> requestBody) {
+        String answer = requestBody.get("keyword");
+        return null;
     }
 }
