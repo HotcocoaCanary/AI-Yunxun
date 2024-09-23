@@ -1,9 +1,9 @@
 <script setup>
-
+import GetGraph from "@/components/GetGraph.vue";
 </script>
 
 <template>
-overall
+<GetGraph method="all"></GetGraph>
 </template>
 
 <style scoped>

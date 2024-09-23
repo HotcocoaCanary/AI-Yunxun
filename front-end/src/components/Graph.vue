@@ -1,31 +1,28 @@
 <template>
-  <div ref="chart" style="width: 100%; height: 100%;"></div>
+  <div ref="chart" class="chart-container" style="width: 100%; height: 100%;" ></div>
 </template>
 
 <script>
 import * as echarts from 'echarts';
-import {getGraph} from "@/api/neo4jService.js";
 
 export default {
   name: 'EChartsGraph',
   props: {
-    answer: String
+    nodes: Array,
+    relationships: Array,
   },
   data() {
     return {
-      nodes: [],
-      relationships: [],
       chart: null
     };
   },
-  watch: {
-    answer: {
-      immediate: true,
-      handler(newValue) {
-        if (newValue) {
-          this.fetchData(newValue);
-        }
-      }
+  computed: {
+    // 使用计算属性来处理节点和关系数据
+    computedNodes() {
+      return this.nodes;
+    },
+    computedRelationships() {
+      return this.relationships;
     }
   },
   mounted() {
@@ -37,19 +34,10 @@ export default {
     }
   },
   methods: {
-    async fetchData(answer) {
-      try {
-        let data = await getGraph(answer);
-        console.log(data)
-        this.nodes = data.nodes;
-        this.relationships = data.relationships;
-        this.updateChart();
-      } catch (error) {
-        console.error("获取数据出错", error);
-      }
-    },
     initChart() {
-      this.chart = echarts.init(this.$refs.chart);
+      if (!this.chart) {
+        this.chart = echarts.init(this.$refs.chart);
+      }
       this.updateChart();
     },
     updateChart() {
@@ -87,8 +75,8 @@ export default {
             show: true,
             textStyle: {}
           },
-          data: this.nodes,
-          links: this.relationships,
+          data: this.computedNodes,
+          links: this.computedRelationships,
           categories: [
             {
               name: 'paper'
@@ -106,6 +94,21 @@ export default {
         }]
       };
       this.chart.setOption(option);
+    }
+  },
+  watch: {
+    // 监听props变化，当数据更新时重新渲染图表
+    computedNodes: {
+      handler() {
+        this.updateChart();
+      },
+      deep: true
+    },
+    computedRelationships: {
+      handler() {
+        this.updateChart();
+      },
+      deep: true
     }
   }
 }
