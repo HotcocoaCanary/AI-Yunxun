@@ -13,16 +13,53 @@ export default {
   },
   data() {
     return {
-      chart: null
+      chart: null,
+      // 定义节点类别的颜色映射
+      nodeCategoryColors: {
+        Author: '#FFA500', // 橙色
+        Paper: '#4169E1', // 蓝色
+        Country: '#589462',
+        Institution: '#917634'
+      },
+      // 定义关系标签的颜色映射
+      relationshipLabelColors: {
+        AUTHORED: '#FF69B4', // 粉红色
+        AFFILIATED_WITH: '#235689',
+        LOCATED_IN: '#784512',
+        CITES: '#748596'
+      }
     };
   },
   computed: {
-    // 使用计算属性来处理节点和关系数据
     computedNodes() {
-      return this.nodes;
+      return this.nodes.map(node => ({
+        // 使用 id 作为图表中节点的唯一标识符
+        id: node.id.toString(),
+        // 使用 name 作为图表中节点的显示名称
+        name: node.properties.name,
+        // 其他属性可以根据需要进行添加
+        category: node.category[0],
+        // 如果需要展示其他属性，可以在这里添加
+        nationality: node.properties.Nationality,
+        // 注意：这里假设每个节点只有一个类别
+        itemStyle: {
+          color: this.nodeCategoryColors[node.category[0]] || '#4b565b', // 默认颜色
+        },
+      }));
     },
     computedRelationships() {
-      return this.relationships;
+      return this.relationships.map(relationship => ({
+        // 使用 source 和 target 作为关系连接的起点和终点
+        source: relationship.source.toString(),
+        target: relationship.target.toString(),
+        // 如果需要显示关系的名称或标签，可以在这里添加
+        name: relationship.name,
+        label: relationship.label,
+        lineStyle: {
+          width: 2,
+          color: this.relationshipLabelColors[relationship.label] || '#e2c08d', // 默认颜色
+        },
+      }));
     }
   },
   mounted() {
@@ -64,13 +101,6 @@ export default {
             edgeLength: [10, 50]
           },
           draggable: true,
-          itemStyle: {
-            color: '#4b565b'
-          },
-          lineStyle: {
-            width: 2,
-            color: '#e2c08d'
-          },
           label: {
             show: true,
             textStyle: {}
