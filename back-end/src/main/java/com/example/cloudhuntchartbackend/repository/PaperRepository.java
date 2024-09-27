@@ -9,5 +9,5 @@ import org.springframework.stereotype.Repository;
  */
 @Repository
 public interface PaperRepository extends Neo4jRepository<Paper, Long> {
-    Paper findById(long id);
+    Paper findPaperById(long id);
 }

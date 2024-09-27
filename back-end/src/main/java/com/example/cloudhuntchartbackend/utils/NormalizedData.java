@@ -55,17 +55,18 @@ public class NormalizedData {
     }
 
     private boolean containsNode(List<Map<String, Object>> nodes, Long nodeId) {
-        return nodes.stream().noneMatch(node -> nodeId.equals(node.get("name")));
+        return nodes.stream().noneMatch(node -> nodeId.equals(node.get("id")));
     }
 
     private boolean containsRelationship(List<Map<String, Object>> relationships, Long relationshipId) {
-        return relationships.stream().noneMatch(relationship -> relationshipId.equals(relationship.get("name")));
+        return relationships.stream().noneMatch(relationship -> relationshipId.equals(relationship.get("id")));
     }
 
 
     private Map<String, Object> createNodeJson(Node node) {
         Map<String, Object> nodeJson = new HashMap<>();
-        nodeJson.put("name", node.id());
+        nodeJson.put("id", node.id());
+        nodeJson.put("name", convertNeo4jValueToString(node.get("name")));
         nodeJson.put("properties", convertProperties(node.asMap()));
         nodeJson.put("category", node.labels());
         return nodeJson;

@@ -9,5 +9,5 @@ import org.springframework.stereotype.Repository;
  */
 @Repository
 public interface InstitutionRepository extends Neo4jRepository<Institution, Long> {
-    Institution findById(long id);
+    Institution findInstitutionById(long id);
 }

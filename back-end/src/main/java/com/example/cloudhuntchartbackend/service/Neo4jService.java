@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 import jakarta.annotation.Resource;
 import org.neo4j.driver.Driver;
 import org.neo4j.driver.Session;
+import org.springframework.data.neo4j.core.schema.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -39,32 +40,27 @@ public class Neo4jService {
     private Driver driver;
 
 
-    public int addAllPaper(Iterable<Paper> papers) {
+    public void addAllPaper(Iterable<Paper> papers) {
         paperRepository.saveAll(papers);
-        return 0;
     }
 
-    public int addAllAuthor(Iterable<Author> authors) {
+    public void addAllAuthor(Iterable<Author> authors) {
         authorRepository.saveAll(authors);
-        return 0;
     }
 
-    public int addAllInstitution(Iterable<Institution> institutions) {
+    public void addAllInstitution(Iterable<Institution> institutions) {
         institutionRepository.saveAll(institutions);
-        return 0;
     }
 
-    public int addAllCountry(Iterable<Country> countries) {
+    public void addAllCountry(Iterable<Country> countries) {
         countryRepository.saveAll(countries);
-        return 0;
     }
 
-    public int deleteAll() {
+    public void deleteAll() {
         countryRepository.deleteAll();
         institutionRepository.deleteAll();
         authorRepository.deleteAll();
         paperRepository.deleteAll();
-        return 0;
     }
 
     public void saveExcelToNeo4j(String paperPath, String authorPath, String institutionPath, String countryPath) {
