@@ -1,10 +1,13 @@
 package com.example.cloudhuntchartbackend;
 
+import com.example.cloudhuntchartbackend.service.Neo4jService;
 import com.example.cloudhuntchartbackend.utils.ExcelToData;
+import jakarta.annotation.Resource;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
 import java.util.Map;
+import java.util.Set;
 
 /**
  * @Description: dd
@@ -13,12 +16,16 @@ import java.util.Map;
  */
 @SpringBootTest
 public class TestGetDataFromExcel {
+
+    @Resource
+    private Neo4jService neo4jService;
+
     @Test
     public void test() {
-        Map<String, Iterable<?>> map= ExcelToData.loadFiles("E:\\Code\\Canary\\AI-Cloud-Hunt-Chart\\back-end\\src\\main\\java\\com\\example\\cloudhuntchartbackend\\data\\paper.xlsx",
-                "E:\\Code\\Canary\\AI-Cloud-Hunt-Chart\\back-end\\src\\main\\java\\com\\example\\cloudhuntchartbackend\\data\\author.xlsx",
-                "E:\\Code\\Canary\\AI-Cloud-Hunt-Chart\\back-end\\src\\main\\java\\com\\example\\cloudhuntchartbackend\\data\\institution.xlsx",
-                "E:\\Code\\Canary\\AI-Cloud-Hunt-Chart\\back-end\\src\\main\\java\\com\\example\\cloudhuntchartbackend\\data\\country.xlsx");
+        Map<String, Iterable<?>> map= ExcelToData.loadFiles("E:\\Code\\Canary\\AI-Yunxun\\back-end\\src\\main\\java\\com\\example\\cloudhuntchartbackend\\data\\paper.xlsx",
+                "E:\\Code\\Canary\\AI-Yunxun\\back-end\\src\\main\\java\\com\\example\\cloudhuntchartbackend\\data\\author.xlsx",
+                "E:\\Code\\Canary\\AI-Yunxun\\back-end\\src\\main\\java\\com\\example\\cloudhuntchartbackend\\data\\institution.xlsx",
+                "E:\\Code\\Canary\\AI-Yunxun\\back-end\\src\\main\\java\\com\\example\\cloudhuntchartbackend\\data\\country.xlsx");
         if (map != null) {
 //            System.out.println(map.get("paper"));
 //            System.out.println(map.get("author"));

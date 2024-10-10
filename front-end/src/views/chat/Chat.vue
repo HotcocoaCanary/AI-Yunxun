@@ -1,11 +1,7 @@
 <template>
   <div id="chat">
     <div id="question">
-      <!-- 使用label元素添加提示语句，并通过flex布局实现样式 -->
-      <div class="input-container">
-        <label for="chat-input">Ask a question:</label>
-        <input id="chat-input" v-model="answer" placeholder="Type your question here..."></input>
-      </div>
+      <input id="chat-input" v-model="answer" placeholder="Type your question here..."></input>
     </div>
     <div id="graph">
       <GetGraph :answer="answer" method="answer"></GetGraph>
@@ -18,6 +14,7 @@ import { ref } from 'vue';
 import GetGraph from "@/components/GetGraph.vue";
 
 const answer = ref("What are the papers written by Varrelmann");
+
 </script>
 
 <style scoped>
@@ -29,32 +26,26 @@ const answer = ref("What are the papers written by Varrelmann");
   height: 100%;
 }
 
-.input-container {
+#question {
   display: flex;
   align-items: center;
-  width: 100%;
+  width: 100%; /* 调整宽度 */
   margin: 10px 0;
 }
 
-.input-container label {
-  /* 提示语句样式 */
-  margin-right: 10px;
-  font-size: 16px;
-  color: #555; /* 提示文字颜色 */
-}
-
 #chat-input {
-  /* 输入框样式 */
   flex-grow: 1;
+  width: 100%;
   padding: 10px;
   font-size: 16px;
-  border: 1px solid #ccc; /* 添加边框 */
-  border-radius: 4px; /* 圆角边框 */
-  outline: none; /* 移除聚焦时的边框 */
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  outline: none;
+  margin-right: 10px; /* 添加右边距，为按钮留出空间 */
 }
 
 #chat-input:focus {
-  border-color: #007bff; /* 聚焦时的边框颜色 */
+  border-color: #007bff;
 }
 
 #graph {

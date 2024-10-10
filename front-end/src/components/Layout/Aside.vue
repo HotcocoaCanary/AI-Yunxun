@@ -20,11 +20,11 @@ import {ChatRound, House, PieChart, Search, View} from '@element-plus/icons-vue'
           </el-icon>
           <span>关系可视化</span>
         </template>
-        <el-menu-item index="/relation/search">
+        <el-menu-item index="/relation/maintain">
           <el-icon>
             <Search/>
           </el-icon>
-          <span>检索关系</span>
+          <span>信息维护</span>
         </el-menu-item>
         <el-menu-item index="/relation/overall">
           <el-icon>

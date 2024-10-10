@@ -15,11 +15,8 @@ import org.springframework.stereotype.Service;
 import jakarta.annotation.Resource;
 import org.neo4j.driver.Driver;
 import org.neo4j.driver.Session;
-import org.springframework.data.neo4j.core.schema.*;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Service
 public class Neo4jService {
@@ -39,6 +36,12 @@ public class Neo4jService {
     @Resource
     private Driver driver;
 
+    public void deleteAll() {
+        countryRepository.deleteAll();
+        institutionRepository.deleteAll();
+        authorRepository.deleteAll();
+        paperRepository.deleteAll();
+    }
 
     public void addAllPaper(Iterable<Paper> papers) {
         paperRepository.saveAll(papers);
@@ -54,13 +57,6 @@ public class Neo4jService {
 
     public void addAllCountry(Iterable<Country> countries) {
         countryRepository.saveAll(countries);
-    }
-
-    public void deleteAll() {
-        countryRepository.deleteAll();
-        institutionRepository.deleteAll();
-        authorRepository.deleteAll();
-        paperRepository.deleteAll();
     }
 
     public void saveExcelToNeo4j(String paperPath, String authorPath, String institutionPath, String countryPath) {

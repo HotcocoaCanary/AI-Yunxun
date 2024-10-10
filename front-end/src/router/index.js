@@ -3,7 +3,7 @@ import Layout from "@/views/Layout.vue";
 import Home from "@/views/home/Home.vue";
 import Chat from "@/views/chat/Chat.vue";
 import OverAll from "@/views/relation/OverAll.vue";
-import Search from "@/views/relation/Search.vue";
+import Maintain from "@/views/relation/Maintain.vue";
 
 //导入组件
 
@@ -23,8 +23,8 @@ const routes = [
                 component: OverAll
             },
             {
-                path: '/relation/search',
-                component: Search
+                path: '/relation/maintain',
+                component: Maintain
             },
             {
                 path: '/chat',

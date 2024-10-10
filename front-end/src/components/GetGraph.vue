@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, defineProps } from 'vue';
+import {ref, onMounted, defineProps, watch} from 'vue';
 import { getAnswerGraph, getAllGraph, getSearchGraph } from "@/api/neo4jService.js";
 import Graph from "@/components/Graph.vue";
 
@@ -39,6 +39,17 @@ onMounted(async () => {
     }
   } catch (error) {
     console.error('获取数据出错', error);
+  }
+});
+
+// 监听answer prop的变化
+watch(() => props.answer, async (newAnswer, oldAnswer) => {
+  if (newAnswer !== oldAnswer && props.method === 'answer') {
+    let data = await getAnswerGraph(newAnswer);
+    if (data) {
+      nodes.value = data.nodes;
+      relationships.value = data.relationships;
+    }
   }
 });
 </script>

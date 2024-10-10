@@ -47,18 +47,12 @@ public class Neo4jController {
     @PostMapping("/all")
     public Result<ObjectNode> getAll() {
         try {
-            String cypherQuery = "MATCH p=()-[]->() RETURN p";
+            String cypherQuery = "MATCH p=()-[]->() RETURN p LIMIT 300";
             List<Map<String, Object>> data = neo4jService.executeCypherQueries(Collections.singletonList(cypherQuery));
             ObjectNode result = normalizedData.normalizedCypher(data);
             return Result.success(result);
         } catch (JsonProcessingException e) {
             return Result.error("查询错误" + e.getMessage());
         }
-    }
-
-    @PostMapping("/search")
-    public Result<ObjectNode> search(@RequestBody Map<String, String> requestBody) {
-        String answer = requestBody.get("keyword");
-        return null;
     }
 }

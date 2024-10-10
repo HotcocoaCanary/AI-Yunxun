@@ -1,9 +1,9 @@
 <script setup>
-
+import Upload from "@/components/Upload.vue";
 </script>
 
 <template>
-search
+<Upload></Upload>
 </template>
 
 <style scoped>

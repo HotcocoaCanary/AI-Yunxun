@@ -68,7 +68,6 @@ public class ExcelToData {
         return dataMap;
     }
 
-    // Define functional interface for loading different entity types
     @FunctionalInterface
     interface LoadFunction {
         void loadRow(Row row, Map<String, Integer> headerMap);
