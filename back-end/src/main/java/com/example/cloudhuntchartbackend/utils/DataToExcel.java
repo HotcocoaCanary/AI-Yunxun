@@ -13,6 +13,7 @@ import org.apache.poi.xssf.streaming.SXSSFWorkbook;
 
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -24,8 +25,14 @@ public class DataToExcel {
     private static final String[] INSTITUTION_HEADERS = {"id", "name", "AFFILIATED_WITH", "author_name"};
     private static final String[] COUNTRY_HEADERS = {"id", "nation", "LOCATED_IN", "institution_name"};
 
+    public void getExcel(Map<String, Set<?>> map, String paperFilePath, String authorFilePath, String institutionFilePath, String countryFilePath) {
+        createPaperExcel((Set<Paper>) map.get("paper"), paperFilePath);
+        createAuthorExcel((Set<Author>) map.get("author"), authorFilePath);
+        createInstitutionExcel((Set<Institution>) map.get("institution"), institutionFilePath);
+        createCountryExcel((Set<Country>) map.get("country"), countryFilePath);
+    }
 
-    public static void createPaperExcel(Set<Paper> setData, String fileName) {
+    private void createPaperExcel(Set<Paper> setData, String fileName) {
         try (SXSSFWorkbook workbook = new SXSSFWorkbook();
              FileOutputStream outputStream = new FileOutputStream(fileName)) {
 
@@ -59,7 +66,7 @@ public class DataToExcel {
         }
     }
 
-    public static void createAuthorExcel(Set<Author> setData, String fileName) {
+    private void createAuthorExcel(Set<Author> setData, String fileName) {
         try (SXSSFWorkbook workbook = new SXSSFWorkbook();
              FileOutputStream outputStream = new FileOutputStream(fileName)) {
 
@@ -93,7 +100,7 @@ public class DataToExcel {
         }
     }
 
-    public static void createInstitutionExcel(Set<Institution> setData, String fileName) {
+    private void createInstitutionExcel(Set<Institution> setData, String fileName) {
         try (SXSSFWorkbook workbook = new SXSSFWorkbook();
              FileOutputStream outputStream = new FileOutputStream(fileName)) {
 
@@ -125,7 +132,7 @@ public class DataToExcel {
         }
     }
 
-    public static void createCountryExcel(Set<Country> setData, String fileName) {
+    private void createCountryExcel(Set<Country> setData, String fileName) {
         try (SXSSFWorkbook workbook = new SXSSFWorkbook();
              FileOutputStream outputStream = new FileOutputStream(fileName)) {
 

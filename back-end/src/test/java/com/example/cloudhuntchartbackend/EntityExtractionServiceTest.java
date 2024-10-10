@@ -4,7 +4,6 @@ import com.example.cloudhuntchartbackend.repository.AuthorRepository;
 import com.example.cloudhuntchartbackend.service.EntityExtractorService;
 import com.example.cloudhuntchartbackend.service.Neo4jService;
 import com.example.cloudhuntchartbackend.utils.EntityToCypherQuery;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import jakarta.annotation.Resource;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,7 +25,7 @@ public class EntityExtractionServiceTest {
     private AuthorRepository authorRepository;
 
     @Test
-    public void test2() throws JsonProcessingException {
+    public void test2() {
         String sentence = "What are the papers written by Varrelmann";
         Map<String, Object> entities = entityExtractor.extractEntityAttributes(sentence);
         List<String> list = new EntityToCypherQuery().getCypherQuery(entities);

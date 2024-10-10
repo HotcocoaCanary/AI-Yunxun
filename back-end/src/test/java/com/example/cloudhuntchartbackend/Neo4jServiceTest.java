@@ -6,18 +6,18 @@ import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
 /**
- * @Description: dd
+ * @Description: Neo4jServiceTest
  * @Author: Canary
  * @Date: 2024/8/4 下午7:03
  */
 @SpringBootTest
-public class TestDataToNeo4j {
+public class Neo4jServiceTest {
 
     @Resource
     Neo4jService neo4jService;
 
     @Test
-    public void test() {
+    public void dataInit() {
         neo4jService.deleteAll();
         neo4jService.saveExcelToNeo4j("E:\\Code\\Canary\\AI-Yunxun\\back-end\\src\\main\\java\\com\\example\\cloudhuntchartbackend\\data\\paper.xlsx",
                 "E:\\Code\\Canary\\AI-Yunxun\\back-end\\src\\main\\java\\com\\example\\cloudhuntchartbackend\\data\\author.xlsx",

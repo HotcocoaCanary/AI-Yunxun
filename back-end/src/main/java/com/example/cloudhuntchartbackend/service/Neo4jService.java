@@ -8,15 +8,21 @@ import com.example.cloudhuntchartbackend.repository.AuthorRepository;
 import com.example.cloudhuntchartbackend.repository.CountryRepository;
 import com.example.cloudhuntchartbackend.repository.InstitutionRepository;
 import com.example.cloudhuntchartbackend.repository.PaperRepository;
+import com.example.cloudhuntchartbackend.utils.EntityToCypherQuery;
 import com.example.cloudhuntchartbackend.utils.ExcelToData;
-import org.neo4j.driver.Result;
-import org.neo4j.driver.types.MapAccessor;
-import org.springframework.stereotype.Service;
+import com.example.cloudhuntchartbackend.utils.NormalizedData;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import jakarta.annotation.Resource;
 import org.neo4j.driver.Driver;
+import org.neo4j.driver.Result;
 import org.neo4j.driver.Session;
+import org.neo4j.driver.types.MapAccessor;
+import org.springframework.stereotype.Service;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 
 @Service
 public class Neo4jService {
@@ -31,7 +37,10 @@ public class Neo4jService {
     private CountryRepository countryRepository;
 
     @Resource
-    private InstitutionRepository institutionRepository; // 注意首字母小写
+    private InstitutionRepository institutionRepository;
+
+    @Resource
+    private EntityExtractorService entityExtractorService;
 
     @Resource
     private Driver driver;
@@ -85,7 +94,20 @@ public class Neo4jService {
         }
     }
 
-    public List<Map<String, Object>> executeCypherQueries(List<String> cypherQueries) {
+    public ObjectNode findAll(int limits) {
+        String cypherQuery = "MATCH p=()-[]->() RETURN p LIMIT " + limits;
+        List<Map<String, Object>> data = executeCypherQueries(Collections.singletonList(cypherQuery));
+        return new NormalizedData().normalizedCypher(data);
+    }
+
+    public ObjectNode getAnswer(String answer) {
+        Map<String, Object> entity = entityExtractorService.extractEntityAttributes(answer);
+        List<String> cypherQuery = new EntityToCypherQuery().getCypherQuery(entity);
+        List<Map<String, Object>> data = executeCypherQueries(cypherQuery);
+        return new NormalizedData().normalizedCypher(data);
+    }
+
+    private List<Map<String, Object>> executeCypherQueries(List<String> cypherQueries) {
         List<Map<String, Object>> allResults = new ArrayList<>();
         try (Session session = driver.session()) {
             for (String cypherQuery : cypherQueries) {
