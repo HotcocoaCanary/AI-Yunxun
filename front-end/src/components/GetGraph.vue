@@ -1,12 +1,10 @@
 <script setup>
 import {ref, onMounted, defineProps, watch} from 'vue';
-import { getAnswerGraph, getAllGraph, getSearchGraph } from "@/api/neo4jService.js";
+import { getAnswerGraph, getAllGraph} from "@/api/neo4jService.js";
 import Graph from "@/components/Graph.vue";
 
 const props = defineProps({
-  method: String, // 控制参数，用于选择获取图的方法
   answer: String, // 答案参数，用于getAnswerGraph
-  keyword: String // 关键词参数，用于getSearchGraph
 });
 
 const nodes = ref([]);
@@ -15,23 +13,10 @@ const relationships = ref([]);
 onMounted(async () => {
   let data;
   try {
-    switch (props.method) {
-      case 'answer':
-        if (props.answer) {
-          data = await getAnswerGraph(props.answer);
-        }
-        break;
-      case 'all':
-        data = await getAllGraph();
-        break;
-      case 'search':
-        if (props.keyword) {
-          data = await getSearchGraph(props.keyword);
-        }
-        break;
-      default:
-        console.error('未知的获取图方法');
-        return;
+    if(props.answer){
+      data = await getAnswerGraph(props.answer);
+    }else{
+      data = await getAllGraph();
     }
     if (data) {
       nodes.value = data.nodes;
@@ -44,7 +29,7 @@ onMounted(async () => {
 
 // 监听answer prop的变化
 watch(() => props.answer, async (newAnswer, oldAnswer) => {
-  if (newAnswer !== oldAnswer && props.method === 'answer') {
+  if (newAnswer !== oldAnswer) {
     let data = await getAnswerGraph(newAnswer);
     if (data) {
       nodes.value = data.nodes;

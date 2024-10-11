@@ -1,11 +1,17 @@
 package com.example.cloudhuntchartbackend.utils;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.streaming.SXSSFWorkbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
 
 import java.io.*;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 
 /**
@@ -16,7 +22,14 @@ import java.util.Map;
  * @creat 2024/10/9 下午2:37
  **/
 
+@Component
 public class FileTool {
+
+    @Value("${app.upload.replenishment}")
+    private String replenishmentFilePath;
+
+    @Value("${app.upload.work.sheet.name}")
+    private String SHEET_NAME;
 
     private static final String[] OUTPUT_FILE_PATHS = {
             "${app.upload.paper}",
@@ -32,7 +45,7 @@ public class FileTool {
             "id,nation,LOCATED_IN,institution_name"
     };
 
-    public void excelSplitter(String replenishmentFilePath, String SHEET_NAME) throws IOException {
+    public void excelSplitter() throws IOException {
         Map<String, Workbook> workbooks = new HashMap<>();
         for (int i = 0; i < OUTPUT_FILE_PATHS.length; i++) {
             String filePath = OUTPUT_FILE_PATHS[i];
@@ -40,7 +53,7 @@ public class FileTool {
             getOrCreateSheet(workbook, SHEET_NAME, HEADERS[i].split(","));
             workbooks.put(filePath, workbook);
         }
-        readAndSplitData(replenishmentFilePath, workbooks, SHEET_NAME);
+        readAndSplitData(replenishmentFilePath, workbooks);
         for (Map.Entry<String, Workbook> entry : workbooks.entrySet()) {
             writeWorkbookToFile(entry.getValue(), entry.getKey());
         }
@@ -58,13 +71,12 @@ public class FileTool {
         }
     }
 
-    private Sheet getOrCreateSheet(Workbook workbook, String sheetName, String[] headers) {
+    private void getOrCreateSheet(Workbook workbook, String sheetName, String[] headers) {
         Sheet sheet = workbook.getSheet(sheetName);
         if (sheet == null) {
             sheet = workbook.createSheet(sheetName);
             createHeaderRow(sheet, headers);
         }
-        return sheet;
     }
 
     private void createHeaderRow(Sheet sheet, String[] headers) {
@@ -75,7 +87,7 @@ public class FileTool {
         }
     }
 
-    private void readAndSplitData(String inputFile, Map<String, Workbook> workbooks, String SHEET_NAME) throws IOException {
+    private void readAndSplitData(String inputFile, Map<String, Workbook> workbooks) throws IOException {
         try (InputStream inputStream = new FileInputStream(inputFile);
              Workbook inputWorkbook = new SXSSFWorkbook(new XSSFWorkbook(inputStream))) {
             Sheet inputSheet = inputWorkbook.getSheetAt(0);
@@ -114,6 +126,64 @@ public class FileTool {
                 }
             }
         }
+    }
+
+    public ObjectNode convertExcelToJson(String filePath) throws IOException {
+        File excelFile = new File(filePath);
+        ObjectMapper mapper = new ObjectMapper();
+        ObjectNode result = mapper.createObjectNode();
+        ArrayNode headersJson = mapper.createArrayNode();
+        ArrayNode dataJson = mapper.createArrayNode();
+
+        try (FileInputStream fis = new FileInputStream(excelFile);
+             Workbook workbook = new XSSFWorkbook(fis)) {
+            Sheet sheet = workbook.getSheet(SHEET_NAME);
+            Iterator<Row> rowIterator = sheet.iterator();
+            // 读取表头
+            if (rowIterator.hasNext()) {
+                Row headerRow = rowIterator.next();
+                Iterator<Cell> cellIterator = headerRow.cellIterator();
+                while (cellIterator.hasNext()) {
+                    Cell cell = cellIterator.next();
+                    headersJson.add(cell.getStringCellValue());
+                }
+            }
+            // 读取数据
+            while (rowIterator.hasNext()) {
+                Row dataRow = rowIterator.next();
+                Iterator<Cell> cellIterator = dataRow.cellIterator();
+                ArrayNode rowDataJson = mapper.createArrayNode();
+                while (cellIterator.hasNext()) {
+                    Cell cell = cellIterator.next();
+                    switch (cell.getCellType()) {
+                        case STRING:
+                            rowDataJson.add(cell.getStringCellValue());
+                            break;
+                        case NUMERIC:
+                            if (DateUtil.isCellDateFormatted(cell)) {
+                                rowDataJson.add(cell.getDateCellValue().toString());
+                            } else {
+                                rowDataJson.add(cell.getNumericCellValue());
+                            }
+                            break;
+                        case BOOLEAN:
+                            rowDataJson.add(cell.getBooleanCellValue());
+                            break;
+                        case FORMULA:
+                            rowDataJson.add(cell.getCellFormula());
+                            break;
+                        default:
+                            rowDataJson.add("");
+                    }
+                }
+                dataJson.add(rowDataJson);
+            }
+        }
+        // 设置表头和数据到结果JSON对象
+        result.set("headers", headersJson);
+        result.set("data", dataJson);
+        // 返回JSON数据对象
+        return result;
     }
 
     private static void copyCell(Cell sourceCell, Cell targetCell) {

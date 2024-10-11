@@ -4,7 +4,7 @@
       <input id="chat-input" v-model="answer" placeholder="Type your question here..."></input>
     </div>
     <div id="graph">
-      <GetGraph :answer="answer" method="answer"></GetGraph>
+      <GetGraph :answer="answer"></GetGraph>
     </div>
   </div>
 </template>

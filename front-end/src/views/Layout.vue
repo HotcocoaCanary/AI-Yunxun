@@ -9,7 +9,7 @@ import Header from "@/components/Layout/Header.vue";
       <el-aside id="aside">
         <Aside/>
       </el-aside>
-      <el-container>
+      <el-container id="right">
         <el-header id="header">
           <Header/>
         </el-header>
@@ -40,7 +40,12 @@ import Header from "@/components/Layout/Header.vue";
   flex: 0 0 auto; /* 关闭flex grow和shrink，基于内容宽度 */
 }
 
+#right {
+  height: 100vh;
+}
+
 #header {
+  height: 5%;
   flex: 0 0 auto;
   background-color: #fff; /* 头部背景色 */
   color: #333; /* 头部文本颜色 */
@@ -53,6 +58,8 @@ import Header from "@/components/Layout/Header.vue";
 }
 
 #main {
+  height: 90%;
+  width: 100%;
   flex: 1;
   background-color: #f8f8f8; /* 主区域背景色 */
   padding: 20px; /* 主区域内边距 */
@@ -62,6 +69,7 @@ import Header from "@/components/Layout/Header.vue";
 }
 
 #footer {
+  height: 5%;
   flex: 0 0 auto;
   background-color: #333; /* 底部背景色 */
   color: #D7AC70; /* 底部文本颜色 */

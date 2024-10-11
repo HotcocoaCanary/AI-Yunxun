@@ -3,7 +3,7 @@ import GetGraph from "@/components/GetGraph.vue";
 </script>
 
 <template>
-<GetGraph method="all"></GetGraph>
+<GetGraph></GetGraph>
 </template>
 
 <style scoped>
