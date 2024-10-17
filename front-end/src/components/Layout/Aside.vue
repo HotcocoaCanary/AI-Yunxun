@@ -1,12 +1,22 @@
 <script setup>
 import {ChatRound, House, PieChart, Search, View} from '@element-plus/icons-vue'
+import { watch, ref } from 'vue';
+import { useRoute } from 'vue-router';
+
+const route = useRoute();
+const activeMenu = ref('/'); // 假设默认选中首页
+
+watch(() => route.path, (newPath) => {
+  // 根据路由更新选中菜单项
+  activeMenu.value = newPath;
+});
 </script>
 
 <template>
   <div class="aside">
     <div class="el-aside-logo"></div>
     <!-- element-plus的菜单标签 -->
-    <el-menu active-text-color="#ffd04b" background-color="#1F1F1E" text-color="#fff" router>
+    <el-menu active-text-color="#ffd04b" background-color="#1F1F1E" text-color="#fff" :default-active="activeMenu" router>
       <el-menu-item index="/home">
         <el-icon>
           <House/>

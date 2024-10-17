@@ -16,19 +16,23 @@ const routes = [
         children: [
             {
                 path: '/home',
-                component: Home
+                component: Home,
+                meta: { title: '首页' },
             },
             {
                 path: '/relation/overall',
-                component: OverAll
+                component: OverAll,
+                meta: { title: '关系全貌'}
             },
             {
                 path: '/relation/maintain',
-                component: Maintain
+                component: Maintain,
+                meta: { title: '信息维护'}
             },
             {
                 path: '/chat',
-                component: Chat
+                component: Chat,
+                meta: { title: '问答系统'}
             }
         ]
     }
