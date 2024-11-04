@@ -16,7 +16,7 @@ import Header from "@/components/Layout/Header.vue";
         <el-main id="main">
           <router-view></router-view>
         </el-main>
-        <el-footer id="footer">creat by @Canary</el-footer>
+        <el-footer id="footer">creat by @张文博 @彭玺赫</el-footer>
       </el-container>
     </el-container>
   </div>
