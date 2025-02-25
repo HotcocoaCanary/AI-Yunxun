@@ -11,5 +11,4 @@ public class CloudHuntChartBackendApplication {
     public static void main(String[] args) {
         SpringApplication.run(CloudHuntChartBackendApplication.class, args);
     }
-
 }
