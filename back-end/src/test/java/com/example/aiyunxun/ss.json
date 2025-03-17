@@ -1,0 +1,310 @@
+{
+  "relationships": [
+    {
+      "name": 0,
+      "source": 10389,
+      "label": "Keyword_Publication",
+      "target": 818
+    },
+    {
+      "name": 1,
+      "source": 9692,
+      "label": "Keyword_Publication",
+      "target": 358
+    },
+    {
+      "name": 2,
+      "source": 9472,
+      "label": "Keyword_Publication",
+      "target": 13
+    },
+    {
+      "name": 3,
+      "source": 9872,
+      "label": "Keyword_Publication",
+      "target": 879
+    },
+    {
+      "name": 4,
+      "source": 9191,
+      "label": "Keyword_Publication",
+      "target": 435
+    },
+    {
+      "name": 5,
+      "source": 10889,
+      "label": "Keyword_Publication",
+      "target": 132
+    },
+    {
+      "name": 6,
+      "source": 10187,
+      "label": "Keyword_Publication",
+      "target": 141
+    },
+    {
+      "name": 7,
+      "source": 9611,
+      "label": "Keyword_Publication",
+      "target": 580
+    },
+    {
+      "name": 8,
+      "source": 10137,
+      "label": "Keyword_Publication",
+      "target": 1007
+    },
+    {
+      "name": 9,
+      "source": 10193,
+      "label": "Keyword_Publication",
+      "target": 364
+    }
+  ],
+  "nodes": [
+    {
+      "name": "\"Gene Expression Regulation\"",
+      "id": 10389,
+      "category": [
+        "Keyword"
+      ],
+      "properties": {
+        "name": "Gene Expression Regulation",
+        "id": "Gene Expression Regulation"
+      }
+    },
+    {
+      "name": "NULL",
+      "id": 818,
+      "category": [
+        "Publication"
+      ],
+      "properties": {
+        "journal": "Molecular plant-microbe interactions : MPMI",
+        "id": "22835273",
+        "pmid": "22835273",
+        "title": "Synergistic interaction of CLAVATA1, CLAVATA2, and RECEPTOR-LIKE PROTEIN KINASE 2 in cyst nematode parasitism of Arabidopsis."
+      }
+    },
+    {
+      "name": "\"Fertility\"",
+      "id": 9692,
+      "category": [
+        "Keyword"
+      ],
+      "properties": {
+        "name": "Fertility",
+        "id": "Fertility"
+      }
+    },
+    {
+      "name": "NULL",
+      "id": 358,
+      "category": [
+        "Publication"
+      ],
+      "properties": {
+        "journal": "Doklady biological sciences : proceedings of the Academy of Sciences of the USSR, Biological sciences sections",
+        "id": "12577632",
+        "pmid": "12577632",
+        "title": "The use of RAPD analysis of sugar-beet mitochondrial DNA in search of CMS genes."
+      }
+    },
+    {
+      "name": "\"metabolism\"",
+      "id": 9472,
+      "category": [
+        "Keyword"
+      ],
+      "properties": {
+        "name": "metabolism",
+        "id": "metabolism"
+      }
+    },
+    {
+      "name": "NULL",
+      "id": 13,
+      "category": [
+        "Publication"
+      ],
+      "properties": {
+        "date": "39844",
+        "journal": "TAG. Theoretical and applied genetics. Theoretische und angewandte Genetik",
+        "id": "19183859",
+        "title": "Pollen dispersal in sugar beet production fields.",
+        "pmid": "19183859"
+      }
+    },
+    {
+      "name": "\"Lettuce\"",
+      "id": 9872,
+      "category": [
+        "Keyword"
+      ],
+      "properties": {
+        "name": "Lettuce",
+        "id": "Lettuce"
+      }
+    },
+    {
+      "name": "NULL",
+      "id": 879,
+      "category": [
+        "Publication"
+      ],
+      "properties": {
+        "date": "39457",
+        "journal": "The ISME journal",
+        "id": "18185595",
+        "pmid": "18185595",
+        "title": "The life history of the plant pathogen Pseudomonas syringae is linked to the water cycle."
+      }
+    },
+    {
+      "name": "\"Genetic\"",
+      "id": 9191,
+      "category": [
+        "Keyword"
+      ],
+      "properties": {
+        "name": "Genetic",
+        "id": "Genetic"
+      }
+    },
+    {
+      "name": "NULL",
+      "id": 435,
+      "category": [
+        "Publication"
+      ],
+      "properties": {
+        "journal": "Environmental biosafety research",
+        "id": "16209134",
+        "pmid": "16209134",
+        "title": "Employing a composite gene-flow index to numerically quantify a crop's potential for gene flow: an Irish perspective."
+      }
+    },
+    {
+      "name": "\"genetics\"",
+      "id": 10889,
+      "category": [
+        "Keyword"
+      ],
+      "properties": {
+        "name": "genetics",
+        "id": "genetics"
+      }
+    },
+    {
+      "name": "NULL",
+      "id": 132,
+      "category": [
+        "Publication"
+      ],
+      "properties": {
+        "journal": "Archives of virology",
+        "id": "11003469",
+        "pmid": "11003469",
+        "title": "Molecular analyses of European A, B and P type sources of Beet necrotic yellow vein virus and detection of the rare P type in Kazakhstan."
+      }
+    },
+    {
+      "name": "\"Prebiotics\"",
+      "id": 10187,
+      "category": [
+        "Keyword"
+      ],
+      "properties": {
+        "name": "Prebiotics",
+        "id": "Prebiotics"
+      }
+    },
+    {
+      "name": "NULL",
+      "id": 141,
+      "category": [
+        "Publication"
+      ],
+      "properties": {
+        "date": "44056",
+        "journal": "Biomolecules",
+        "id": "32823755",
+        "pmid": "32823755",
+        "title": "Dietary Supplementation with Sugar Beet Fructooligosaccharides and Garlic Residues Promotes Growth of Beneficial Bacteria and Increases Weight Gain in Neonatal Lambs."
+      }
+    },
+    {
+      "name": "\"Molecular Sequence Data\"",
+      "id": 9611,
+      "category": [
+        "Keyword"
+      ],
+      "properties": {
+        "name": "Molecular Sequence Data",
+        "id": "Molecular Sequence Data"
+      }
+    },
+    {
+      "name": "NULL",
+      "id": 580,
+      "category": [
+        "Publication"
+      ],
+      "properties": {
+        "date": "38346",
+        "journal": "Journal of virological methods",
+        "id": "15664049",
+        "pmid": "15664049",
+        "title": "A multiplex RT-PCR assay capable of distinguishing beet necrotic yellow vein virus types A and B."
+      }
+    },
+    {
+      "name": "\"analysis\"",
+      "id": 10137,
+      "category": [
+        "Keyword"
+      ],
+      "properties": {
+        "name": "analysis",
+        "id": "analysis"
+      }
+    },
+    {
+      "name": "NULL",
+      "id": 1007,
+      "category": [
+        "Publication"
+      ],
+      "properties": {
+        "journal": "Communications in agricultural and applied biological sciences",
+        "id": "26084110",
+        "pmid": "26084110",
+        "title": "USE OF GREEN MANURE CROPS AND SUGAR BEET VARIETIES TO CONTROL HETERODERA BETAE."
+      }
+    },
+    {
+      "name": "\"Plant Roots\"",
+      "id": 10193,
+      "category": [
+        "Keyword"
+      ],
+      "properties": {
+        "name": "Plant Roots",
+        "id": "Plant Roots"
+      }
+    },
+    {
+      "name": "NULL",
+      "id": 364,
+      "category": [
+        "Publication"
+      ],
+      "properties": {
+        "journal": "Physiologia plantarum",
+        "id": "19121102",
+        "pmid": "19121102",
+        "title": "Functional differentiation of the sugar beet root system as indicator of developmental phase change."
+      }
+    }
+  ]
+}
