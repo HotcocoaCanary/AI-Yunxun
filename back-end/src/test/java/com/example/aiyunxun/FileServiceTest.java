@@ -15,4 +15,9 @@ public class FileServiceTest {
     public void testDownloadExcel() {
         fileService.updateDataFromExcel();
     }
+
+    @Test
+    public void testUploadExcel() {
+        fileService.downloadDataToExcel();
+    }
 }

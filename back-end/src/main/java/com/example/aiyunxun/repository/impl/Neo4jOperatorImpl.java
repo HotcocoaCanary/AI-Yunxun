@@ -33,6 +33,17 @@ public class Neo4jOperatorImpl implements Neo4jOperator {
     }
 
     @Override
+    public void createNode(Map<String, List<Node>> nodes) {
+        for(Map.Entry<String, List<Node>> entry : nodes.entrySet()) {
+            String label = entry.getKey();
+            List<Node> nodeList = entry.getValue();
+            for (Node node : nodeList) {
+                createNode(label, node.getProperties());
+            }
+        }
+    }
+
+    @Override
     public void deleteNode(String label, Map<String, Object> properties) {
         String cql;
         // 如果属性为空，删除所有该label的节点
@@ -119,6 +130,17 @@ public class Neo4jOperatorImpl implements Neo4jOperator {
             session.run(cql, params);
         } catch (Exception e) {
             throw new RuntimeException("创建关系失败", e);
+        }
+    }
+
+    @Override
+    public void createRelation(Map<String, List<Relationship>> relationships) {
+        for (Map.Entry<String, List<Relationship>> entry : relationships.entrySet()) {
+            String relationType = entry.getKey();
+            List<Relationship> relations = entry.getValue();
+            for (Relationship relation : relations) {
+                createRelation(relationType, relation.getStartNode(), relation.getEndNode(), relation.getProperties());
+            }
         }
     }
 

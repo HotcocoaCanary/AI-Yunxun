@@ -1,8 +1,12 @@
 package com.example.aiyunxun.service.impl;
 
+import com.example.aiyunxun.entity.Node;
+import com.example.aiyunxun.entity.Relationship;
 import com.example.aiyunxun.repository.Neo4jOperator;
 import com.example.aiyunxun.service.FileService;
+import com.example.aiyunxun.util.ExcelUtil;
 import jakarta.annotation.Resource;
+import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
@@ -19,6 +23,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class FileServiceImpl implements FileService {
@@ -51,149 +56,196 @@ public class FileServiceImpl implements FileService {
 
     @Override
     public void updateDataFromExcel() {
-        // 获取所有节点标签
-        List<Map<String, Object>> labels = neo4jOperator.executeCypher("CALL db.labels()");
-        List<String> labelsList = labels.stream()
-                .map(m -> m.get("label").toString())
-                .toList();
+        // 读取节点数据
+        Map<String, List<Node>> nodes = readNodeData();
+        // 读取关系数据
+        Map<String, List<Relationship>> relationships = readRelationshipData(nodes);
+        // 批量写入数据库
+        neo4jOperator.createNode(nodes);
+        neo4jOperator.createRelation(relationships);
+    }
 
-        // 获取所有关系类型
-        List<Map<String, Object>> relationships = neo4jOperator.executeCypher("""
-                MATCH (start)-[rel]->(end)
-                WITH DISTINCT type(rel) AS relType, labels(start) AS sLabels, labels(end) AS eLabels
-                RETURN relType, sLabels, eLabels""");
-
-        // 创建节点Excel文件
-        try (Workbook nodesWorkbook = new XSSFWorkbook()) {
-            // 处理每个节点标签
-            for (String label : labelsList) {
-                String sanitizedLabel = sanitizeSheetName(label);
-                Sheet sheet = nodesWorkbook.createSheet(sanitizedLabel);
-
-                // 查询节点数据（包含name属性）
-                String cypher = String.format(
-                        "MATCH (n:`%s`) RETURN properties(n) AS props, n.name AS name",
-                        label.replace("`", "``"));
-                List<Map<String, Object>> nodesData = neo4jOperator.executeCypher(cypher);
-
-                // 生成表头
-                Set<String> headers = new LinkedHashSet<>();
-                headers.add("name");  // 确保name在第一列
-                List<Map<String, Object>> rows = new ArrayList<>();
-
-                for (Map<String, Object> row : nodesData) {
-                    Map<String, Object> props = (Map<String, Object>) row.get("props");
-                    Map<String, Object> dataRow = new LinkedHashMap<>();
-                    dataRow.put("name", row.get("name"));
-                    dataRow.putAll(props);
-                    rows.add(dataRow);
-                    headers.addAll(props.keySet());
-                }
-
-                // 写入表头
-                Row headerRow = sheet.createRow(0);
-                int colNum = 0;
-                for (String header : headers) {
-                    headerRow.createCell(colNum++).setCellValue(header);
-                }
-
-                // 写入数据
-                int rowNum = 1;
-                for (Map<String, Object> data : rows) {
-                    Row row = sheet.createRow(rowNum++);
-                    colNum = 0;
-                    for (String header : headers) {
-                        Object value = data.getOrDefault(header, "");
-                        row.createCell(colNum++).setCellValue(value.toString());
-                    }
-                }
-            }
-
-            // 保存节点文件
-            try (FileOutputStream out = new FileOutputStream(dataPath + "Nodes.xlsx")) {
-                nodesWorkbook.write(out);
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        // 创建关系Excel文件
-        try (Workbook relsWorkbook = new XSSFWorkbook()) {
-            // 处理每个关系类型
-            Set<String> processedRels = new HashSet<>();
-            for (Map<String, Object> rel : relationships) {
-                String relType = rel.get("relType").toString();
-                if (processedRels.contains(relType)) continue;
-                processedRels.add(relType);
-
-                String sanitizedRel = sanitizeSheetName(relType);
-                Sheet sheet = relsWorkbook.createSheet(sanitizedRel);
-
-                // 查询关系数据（包含节点name）
-                String cypher = String.format(
-                        "MATCH (start)-[rel:`%s`]->(end) " +
-                                "RETURN properties(rel) AS relProps, " +
-                                "       start.name AS startName, " +
-                                "       end.name AS endName, " +
-                                "       labels(start) AS startLabels, " +
-                                "       labels(end) AS endLabels",
-                        relType.replace("`", "``"));
-
-                List<Map<String, Object>> relsData = neo4jOperator.executeCypher(cypher);
-
-                // 生成表头
-                Set<String> headers = new LinkedHashSet<>();
-                headers.add("startName");
-                headers.add("endName");
-                headers.add("startLabels");
-                headers.add("endLabels");
-
-                List<Map<String, Object>> rows = new ArrayList<>();
-                for (Map<String, Object> row : relsData) {
-                    Map<String, Object> dataRow = new LinkedHashMap<>();
-                    // 节点信息
-                    dataRow.put("startName", row.get("startName"));
-                    dataRow.put("endName", row.get("endName"));
-                    dataRow.put("startLabels", String.join(",", (List<String>) row.get("startLabels")));
-                    dataRow.put("endLabels", String.join(",", (List<String>) row.get("endLabels")));
-                    // 关系属性
-                    Map<String, Object> relProps = (Map<String, Object>) row.get("relProps");
-                    dataRow.putAll(relProps);
-                    rows.add(dataRow);
-                    headers.addAll(relProps.keySet());
-                }
-
-                // 写入表头
-                Row headerRow = sheet.createRow(0);
-                int colNum = 0;
-                for (String header : headers) {
-                    headerRow.createCell(colNum++).setCellValue(header);
-                }
-
-                // 写入数据
-                int rowNum = 1;
-                for (Map<String, Object> data : rows) {
-                    Row row = sheet.createRow(rowNum++);
-                    colNum = 0;
-                    for (String header : headers) {
-                        Object value = data.getOrDefault(header, "");
-                        row.createCell(colNum++).setCellValue(value.toString());
-                    }
-                }
-            }
-
-            // 保存关系文件
-            try (FileOutputStream out = new FileOutputStream(dataPath + "Relationships.xlsx")) {
-                relsWorkbook.write(out);
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
+    private Map<String, List<Node>> readNodeData() {
+        try {
+            Map<String, ExcelUtil.SheetData> nodeSheets = ExcelUtil.readExcel(dataPath + "Nodes.xlsx");
+            return nodeSheets.entrySet().stream()
+                    .collect(Collectors.toMap(
+                            Map.Entry::getKey,
+                            e -> e.getValue().getRows().stream()
+                                    .map(row -> {
+                                        Node node = new Node();
+                                        node.setLabel(e.getKey());
+                                        node.setProperties(processNodeProperties(row));
+                                        return node;
+                                    })
+                                    .collect(Collectors.toList())
+                    ));
+        } catch (IOException e) {
+            throw new RuntimeException("节点数据读取失败", e);
         }
     }
 
-    // 处理特殊字符（Excel工作表名称规范）
-    private String sanitizeSheetName(String name) {
-        return name.replaceAll("[:\\\\/?*\\[\\]]", "_")  // 替换非法字符
-                .substring(0, Math.min(name.length(), 31));  // 限制长度
+    private Map<String, Object> processNodeProperties(Map<String, Object> row) {
+        Map<String, Object> properties = new HashMap<>();
+        row.forEach((key, value) -> {
+            // 保留原始类型
+            if (value != null && !value.toString().isEmpty()) {
+                properties.put(key, value);
+            }
+        });
+        return properties;
+    }
+
+    private Map<String, List<Relationship>> readRelationshipData(Map<String, List<Node>> nodes) {
+        try {
+            Map<String, ExcelUtil.SheetData> relSheets = ExcelUtil.readExcel(dataPath + "Relationships.xlsx");
+            return relSheets.entrySet().stream()
+                    .collect(Collectors.toMap(
+                            Map.Entry::getKey,
+                            e -> e.getValue().getRows().stream()
+                                    .map(row -> createRelationship(e.getKey(), row, nodes))
+                                    .filter(Objects::nonNull)
+                                    .collect(Collectors.toList())
+                    ));
+        } catch (IOException e) {
+            throw new RuntimeException("关系数据读取失败", e);
+        }
+    }
+
+    private Relationship createRelationship(String relType, Map<String, Object> row, Map<String, List<Node>> nodes) {
+        String startLabel = row.get("startLabels").toString();
+        String startName = row.get("startName").toString();
+        String endLabel = row.get("endLabels").toString();
+        String endName = row.get("endName").toString();
+
+        Node start = findNode(nodes, startLabel, startName);
+        Node end = findNode(nodes, endLabel, endName);
+        if (start == null || end == null) return null;
+
+        Map<String, Object> props = new HashMap<>(row);
+        props.remove("startLabels");
+        props.remove("startName");
+        props.remove("endLabels");
+        props.remove("endName");
+
+        return new Relationship(relType, start, end, props);
+    }
+
+    private Node findNode(Map<String, List<Node>> nodes, String label, String name) {
+        return nodes.getOrDefault(label, Collections.emptyList()).stream()
+                .filter(n -> name.equals(n.getProperties().get("name")))
+                .findFirst()
+                .orElse(null);
+    }
+
+    @Override
+    public void downloadDataToExcel() {
+        exportNodesToExcel();
+        exportRelationshipsToExcel();
+    }
+
+    private void exportNodesToExcel() {
+        Map<String, ExcelUtil.SheetData> nodeData = getLabels().stream()
+                .collect(Collectors.toMap(
+                        label -> label,
+                        this::createNodeSheetData,
+                        (a, b) -> a,
+                        LinkedHashMap::new
+                ));
+
+        try {
+            ExcelUtil.writeExcel(dataPath + "Nodes.xlsx", nodeData);
+        } catch (IOException e) {
+            throw new RuntimeException("节点数据导出失败", e);
+        }
+    }
+
+    private ExcelUtil.SheetData createNodeSheetData(String label) {
+        List<Map<String, Object>> nodes = neo4jOperator.executeCypher(
+                String.format("MATCH (n:`%s`) RETURN properties(n) as props", label)
+        );
+
+        Set<String> headers = new LinkedHashSet<>();
+        List<Map<String, Object>> rows = new ArrayList<>();
+
+        nodes.forEach(nodeMap -> {
+            Map<String, Object> props = (Map<String, Object>) nodeMap.get("props");
+            Map<String, Object> row = new LinkedHashMap<>();
+            props.forEach((k, v) -> {
+                headers.add(k);
+                row.put(k, v.toString());
+            });
+            rows.add(row);
+        });
+
+        ExcelUtil.SheetData sheetData = new ExcelUtil.SheetData();
+        sheetData.setHeaders(new ArrayList<>(headers));
+        sheetData.setRows(rows);
+        return sheetData;
+    }
+
+    private void exportRelationshipsToExcel() {
+        Map<String, ExcelUtil.SheetData> relData = getRelationshipTypes().stream()
+                .collect(Collectors.toMap(
+                        relType -> relType,
+                        this::createRelSheetData,
+                        (a, b) -> a,
+                        LinkedHashMap::new
+                ));
+
+        try {
+            ExcelUtil.writeExcel(dataPath + "Relationships.xlsx", relData);
+        } catch (IOException e) {
+            throw new RuntimeException("关系数据导出失败", e);
+        }
+    }
+
+    private ExcelUtil.SheetData createRelSheetData(String relType) {
+        String cypher = String.format(
+                "MATCH (s)-[r:`%s`]->(e) " +
+                        "RETURN properties(r) as props, " +
+                        "       s.name as startName, labels(s) as startLabels, " +
+                        "       e.name as endName, labels(e) as endLabels",
+                relType);
+
+        List<Map<String, Object>> rels = neo4jOperator.executeCypher(cypher);
+
+        Set<String> headers = new LinkedHashSet<>(Arrays.asList("startName", "startLabels", "endName", "endLabels"));
+        List<Map<String, Object>> rows = new ArrayList<>();
+
+        rels.forEach(relMap -> {
+            Map<String, Object> row = new LinkedHashMap<>();
+            // 基础字段
+            row.put("startName", relMap.get("startName").toString());
+            row.put("endName", relMap.get("endName").toString());
+            row.put("startLabels", String.join(",", (List<String>) relMap.get("startLabels")));
+            row.put("endLabels", String.join(",", (List<String>) relMap.get("endLabels")));
+
+            // 关系属性
+            Map<String, Object> props = (Map<String, Object>) relMap.get("props");
+            props.forEach((k, v) -> {
+                headers.add(k);
+                row.put(k, v.toString());
+            });
+
+            rows.add(row);
+        });
+
+        ExcelUtil.SheetData sheetData = new ExcelUtil.SheetData();
+        sheetData.setHeaders(new ArrayList<>(headers));
+        sheetData.setRows(rows);
+        return sheetData;
+    }
+
+    private List<String> getLabels() {
+        return neo4jOperator.executeCypher("CALL db.labels()").stream()
+                .map(m -> m.get("label").toString())
+                .collect(Collectors.toList());
+    }
+
+    private List<String> getRelationshipTypes() {
+        return neo4jOperator.executeCypher("CALL db.relationshipTypes()").stream()
+                .map(m -> m.get("relationshipType").toString())
+                .collect(Collectors.toList());
     }
 }

@@ -40,8 +40,8 @@ public class FileController {
             headers.add(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_OCTET_STREAM_VALUE);
             // 返回文件资源
             return ResponseEntity.ok()
-                  .headers(headers)
-                  .body(new FileSystemResource(file));
+                    .headers(headers)
+                    .body(new FileSystemResource(file));
         } else {
             return ResponseEntity.notFound().build();
         }
@@ -51,6 +51,8 @@ public class FileController {
     public Response<String> upload(@RequestParam("file") List<MultipartFile> files) {
         try {
             fileService.uploadFiles(files);
+            fileService.updateDataFromExcel();
+            fileService.downloadDataToExcel();
         } catch (IOException e) {
             return Response.error("上传失败");
         }

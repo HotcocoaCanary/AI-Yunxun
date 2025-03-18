@@ -9,6 +9,7 @@ import java.util.Map;
 public interface Neo4jOperator {
     // 创建节点
     void createNode(String label, Map<String, Object> properties);
+    void createNode(Map<String, List<Node>> nodes);
     // 删除节点
     void deleteNode(String label, Map<String, Object> properties);
     // 更新节点
@@ -17,6 +18,7 @@ public interface Neo4jOperator {
     List<Node> queryNode(String label, Map<String, Object> properties);
     // 创建关系
     void createRelation(String relationType, Node startNode, Node endNode, Map<String, Object> properties);
+    void createRelation(Map<String, List<Relationship>> relationships);
     // 删除关系
     void deleteRelation(String relationType, Node startNode, Node endNode, Map<String, Object> properties);
     // 更新关系

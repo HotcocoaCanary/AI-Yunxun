@@ -6,8 +6,7 @@ import java.io.IOException;
 import java.util.List;
 
 public interface FileService {
-    //获取当前数据
-    void updateDataFromExcel();
-
     void uploadFiles(List<MultipartFile> files) throws IOException;
+    void updateDataFromExcel();
+    void downloadDataToExcel();
 }

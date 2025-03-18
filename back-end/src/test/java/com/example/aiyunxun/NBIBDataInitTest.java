@@ -220,7 +220,7 @@ public class NBIBDataInitTest {
             if (keywordNode == null) continue;
             Node publicationNode = findNodeByProperty("Publication", pmid);
             if (publicationNode != null) {
-                Relationship relationship = new Relationship("Keyword_Publication", keywordNode, publicationNode);
+                Relationship relationship = new Relationship("Keyword_Publication", keywordNode, publicationNode, new HashMap<>());
                 relationships.computeIfAbsent("Keyword_Publication", k -> new HashSet<>()).add(relationship);
             }
         }
@@ -247,7 +247,7 @@ public class NBIBDataInitTest {
                 // 处理Author_Publication关系
                 Node publicationNode = findNodeByProperty("Publication", pmid);
                 if (publicationNode != null) {
-                    Relationship rel = new Relationship("AUTHORED", authorNode, publicationNode);
+                    Relationship rel = new Relationship("AUTHORED", authorNode, publicationNode, new HashMap<>());
                     relationships.computeIfAbsent("AUTHORED", k -> new HashSet<>()).add(rel);
                 }
 
@@ -255,7 +255,7 @@ public class NBIBDataInitTest {
                 if (institution != null) {
                     Node institutionNode = findNodeByProperty("Institution", institution);
                     if (institutionNode != null) {
-                        Relationship rel = new Relationship("AFFILIATED_WITH", authorNode, institutionNode);
+                        Relationship rel = new Relationship("AFFILIATED_WITH", authorNode, institutionNode, new HashMap<>());
                         relationships.computeIfAbsent("AFFILIATED_WITH", k -> new HashSet<>()).add(rel);
                     }
                 }
@@ -264,7 +264,7 @@ public class NBIBDataInitTest {
                 if (country != null) {
                     Node countryNode = findNodeByProperty("Country", country);
                     if (countryNode != null) {
-                        Relationship rel = new Relationship("FROM_COUNTRY", authorNode, countryNode);
+                        Relationship rel = new Relationship("FROM_COUNTRY", authorNode, countryNode, new HashMap<>());
                         relationships.computeIfAbsent("FROM_COUNTRY", k -> new HashSet<>()).add(rel);
                     }
                 }
@@ -283,7 +283,7 @@ public class NBIBDataInitTest {
             Node institutionNode = findNodeByProperty("Institution", institution);
             Node countryNode = findNodeByProperty("Country", country);
             if (institutionNode != null && countryNode != null) {
-                Relationship relationship = new Relationship("LOCATED_IN", institutionNode, countryNode);
+                Relationship relationship = new Relationship("LOCATED_IN", institutionNode, countryNode, new HashMap<>());
                 relationships.computeIfAbsent("LOCATED_IN", k -> new HashSet<>()).add(relationship);
             }
         }
@@ -304,12 +304,12 @@ public class NBIBDataInitTest {
             if (publicationNode != null) {
                 Node institutionNode = findNodeByProperty("Institution", institution);
                 if (institutionNode != null) {
-                    Relationship relationship = new Relationship("PUBLISHED_BY", publicationNode, institutionNode);
+                    Relationship relationship = new Relationship("PUBLISHED_BY", publicationNode, institutionNode, new HashMap<>());
                     relationships.computeIfAbsent("PUBLISHED_BY", k -> new HashSet<>()).add(relationship);
                 }
                 Node countryNode = findNodeByProperty("Country", country);
                 if (countryNode != null) {
-                    Relationship relationship = new Relationship("PUBLISHED_IN", publicationNode, countryNode);
+                    Relationship relationship = new Relationship("PUBLISHED_IN", publicationNode, countryNode, new HashMap<>());
                     relationships.computeIfAbsent("PUBLISHED_IN", k -> new HashSet<>()).add(relationship);
                 }
             }

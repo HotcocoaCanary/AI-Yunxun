@@ -15,10 +15,4 @@ public class Relationship {
     private Node endNode;
     // 属性
     private Map<String, Object> properties;
-
-    public Relationship(String affiliation, Node startNode, Node endNode) {
-        this.type = affiliation;
-        this.startNode = startNode;
-        this.endNode = endNode;
-    }
 }
