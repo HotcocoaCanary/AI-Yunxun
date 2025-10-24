@@ -3,12 +3,30 @@ server:
 
 spring:
   application:
-    name: backend
+    name: academic-knowledge-graph
 
   # ==========================
-  # Redis
+  # MySQL Database
+  # ==========================
+  datasource:
+    url: jdbc:mysql://localhost:3306/academic_kg?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+    username: root
+    password: 123456
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQL8Dialect
+
+  # ==========================
+  # MongoDB
   # ==========================
   data:
+    mongodb:
+      uri: mongodb://localhost:27017/academic_kg
     redis:
       host: localhost
       port: 6379
@@ -24,19 +42,58 @@ spring:
       username: neo4j
       password: 123456
 
+          # ==========================
+          # Spring AI
+          # ==========================
+          ai:
+            openai:
+              api-key: ${OPENAI_API_KEY:sk-xxxxxxxxxxxxxxxxxxxxxxxx}
+              base-url: https://api.openai.com/v1
+              chat:
+                options:
+                  model: gpt-4o-mini
+                  temperature: 0.7
+                  max-tokens: 2000
+            vectorstore:
+              chroma:
+                host: localhost
+                port: 8000
+                collection-name: academic-papers
+
   # ==========================
-  # Spring AI
+  # Security
   # ==========================
-  ai:
-    openai:
-      api-key: sk-xxxxxxxxxxxxxxxxxxxxxxxx
-      base-url: https://api.openai.com/v1
-      chat:
-        options:
-          model: gpt-4o-mini
-          temperature: 0.7
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${JWT_ISSUER_URI:http://localhost:8080}
+
+# ==========================
+# Custom Configuration
+# ==========================
+academic:
+  crawler:
+    arxiv:
+      base-url: https://arxiv.org
+      max-papers: 1000
+    cnki:
+      base-url: https://kns.cnki.net
+      max-papers: 500
+  llm:
+    entity-extraction:
+      model: gpt-4o-mini
+      temperature: 0.3
+    relation-extraction:
+      model: gpt-4o-mini
+      temperature: 0.3
+  rag:
+    chunk-size: 1000
+    chunk-overlap: 200
+    top-k: 5
 
 logging:
   level:
     root: info
     org.springframework.ai: debug
+    yunxun.ai.canary.backend: debug

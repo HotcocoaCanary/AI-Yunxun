@@ -1,83 +1,235 @@
-# 甜菜论文知识图谱系统
+# AI-Yunxun 智能知识图谱系统
 
-[![GitHub](https://img.shields.io/badge/GitHub-Repository-blue)](https://github.com/HotcocoaCanary/AI-Vunxun)
+基于图数据库和自然语言实现的学术论文知识图谱系统，提供智能问答、知识图谱可视化、数据管理等功能。
 
-一个基于 **Neo4j 图数据库**和**自然语言处理（NLP）**
-的学术论文知识图谱系统，旨在帮助研究人员高效管理、检索和分析学术资源。系统提供知识图谱可视化展示与智能问答功能，支持从非结构化论文数据中提取结构化信息，构建语义关联网络。
+## 🚀 快速开始
 
----
+### 环境要求
 
-## ✨ 核心功能
+- Java 17+
+- Node.js 18+
+- Maven 3.6+
+- Neo4j 5.0+
+- MongoDB 6.0+
+- MySQL 8.0+
+- Redis 6.0+
 
-- **知识图谱可视化**：通过力导向图展示论文、作者、机构等实体及其复杂关系。
-- **智能问答**：结合 NLP 技术解析用户输入，基于知识图谱提供精准答案。
-- **数据管理**：支持 Excel 和文本文件的数据导入/导出，批量存储至 Neo4j 数据库。
-- **语义分析**：利用 OpenNLP 提取人名、机构、时间等关键实体，生成结构化知识。
+### 启动步骤
 
----
+1. **启动后端服务**
+   ```bash
+   cd backend
+   mvn spring-boot:run
+   ```
 
-## 🛠 技术栈
+2. **启动前端服务**
+   ```bash
+   cd frontend
+   npm run dev
+   ```
 
-| 模块      | 技术组件                                        |
-|---------|---------------------------------------------|
-| **后端**  | Spring Boot、Neo4j、Apache OpenNLP、Apache POI |
-| **前端**  | Vue 3、Element Plus、ECharts、Axios            |
-| **数据库** | Neo4j 图数据库                                  |
-| **工具**  | Maven、npm、Vite                              |
+3. **访问应用**
+   - 前端界面: http://localhost:3000
+   - 后端API: http://localhost:8080
 
----
+### 一键启动（Windows）
 
-## 🚀 快速部署
+运行 `start-dev.bat` 脚本可以同时启动前后端服务。
 
-### 环境准备
+## 🎯 功能特性
 
-- **操作系统**：Windows（推荐）/ Linux / macOS
-- **JDK 17**：运行 Spring Boot 后端
-- **Node.js 16+**：运行 Vue 前端
-- **Neo4j 5+**：存储知识图谱数据
+### 🤖 智能问答
+- 自然语言查询接口
+- 实时聊天体验
+- 支持Markdown格式回答
+- 自动生成图表和知识图谱
 
-### 安装步骤
+### 🕸️ 知识图谱可视化
+- 交互式图谱展示
+- 支持节点和边的点击交互
+- 多种布局算法
+- 实时搜索和筛选
 
-1. **克隆仓库**：
-    ```bash
-    git clone https://github.com/HotcocoaCanary/AI-Vunxun.git
-    ```
-2. **启动 Neo4j**：
-    ```bash
-    # 进入 Neo4j 安装目录并启动服务
-    neo4j console
-    ```    
-   访问 http://localhost:7474，初始用户名/密码为 neo4j/neo4j，首次登录需修改密码。
+### 📊 数据分析
+- 多种图表类型（柱状图、饼图、折线图）
+- 基于ECharts的可视化
+- 实时数据更新
+- 响应式设计
 
-3. **启动后端**：
-   使用 IDE 导入 backend 模块，运行 CloudHuntChartBackendApplication.java。
-4. **启动前端**：
-    ```bash
-    cd front-end
-    npm install    # 安装依赖
-    npm run dev    # 启动开发服务器
-    ```
+### 📁 数据管理
+- 支持JSON、CSV、Excel格式上传
+- 拖拽式文件上传
+- 文件列表管理
+- 数据导入导出
 
-访问 http://localhost:5173 使用系统。
+## 🏗️ 技术架构
 
-### 📂 项目结构
+### 后端技术栈
+- **框架**: Spring Boot + Spring AI
+- **数据库**: 
+  - Neo4j (知识图谱存储)
+  - MongoDB (文献数据存储)
+  - MySQL (用户和日志数据)
+  - Redis (缓存)
+  - Chroma (向量数据库)
+- **大模型**: Spring AI (支持Function Calling与RAG框架)
+- **MCP工具**: CrawlerTool、GraphQueryTool、RAGRetrieverTool、DBServiceTool
 
-```plaintext
-AI-Vunxun/
-├── backend/           # Spring Boot 后端
-│   ├── src/main/java/com/example/...
-│   └── pom.xml
-├── front-end/         # Vue 3 前端
-│   ├── src/views/...
-│   └── package.json
-└── docs/              # 部署文档与示例
+### 前端技术栈
+- **框架**: Next.js 14
+- **样式**: Tailwind CSS
+- **图表**: ECharts + echarts-for-react
+- **图谱**: SVG + 自定义组件
+- **图标**: Lucide React
+- **文件上传**: react-dropzone
+- **Markdown**: react-markdown
+
+## 📁 项目结构
+
+```
+AI-Yunxun/
+├── backend/                 # 后端服务
+│   ├── src/main/java/      # Java源码
+│   │   └── yunxun/ai/canary/backend/
+│   │       ├── controller/ # 控制器层
+│   │       ├── service/    # 服务层
+│   │       ├── model/      # 数据模型
+│   │       ├── repository/ # 数据访问层
+│   │       └── config/     # 配置类
+│   └── src/main/resources/ # 配置文件
+├── frontend/               # 前端应用
+│   ├── app/               # Next.js App Router
+│   ├── components/        # React组件
+│   └── public/           # 静态资源
+└── doc/                  # 文档
 ```
 
-### 📜 许可证
+## 🔧 配置说明
 
-本项目采用 MIT License。
+### 后端配置
 
-### 🤝 贡献与支持
+编辑 `backend/src/main/resources/application.yml`:
 
-欢迎提交 Issue 或 Pull Request！如有问题，请联系维护者或通过 GitHub 讨论区提问。
-让学术知识触手可及，探索科研新边界！ 🌱
+```yaml
+spring:
+  datasource:
+    url: jdbc:mysql://localhost:3306/ai_yunxun
+    username: your_username
+    password: your_password
+  
+  data:
+    neo4j:
+      uri: bolt://localhost:7687
+      username: neo4j
+      password: your_password
+    
+    mongodb:
+      uri: mongodb://localhost:27017/ai_yunxun
+
+  redis:
+    host: localhost
+    port: 6379
+    password: your_password
+
+spring:
+  ai:
+    openai:
+      api-key: your_openai_api_key
+```
+
+### 前端配置
+
+编辑 `frontend/next.config.ts` 中的API代理地址：
+
+```typescript
+async rewrites() {
+  return [
+    {
+      source: '/api/:path*',
+      destination: 'http://localhost:8080/api/:path*',
+    },
+  ];
+}
+```
+
+## 📖 使用指南
+
+### 1. 智能问答
+
+1. 在聊天界面输入自然语言问题
+2. 系统会自动分析意图并返回结果
+3. 支持的问题类型：
+   - 图谱查询："查找与机器学习相关的所有论文"
+   - 数据分析："分析深度学习领域的发展趋势"
+   - 文献综述："总结自然语言处理的最新进展"
+   - 合作网络："显示人工智能领域的合作网络"
+
+### 2. 知识图谱
+
+1. 在知识图谱页面输入搜索查询
+2. 使用筛选器按类型、关系、时间范围筛选
+3. 点击节点查看详细信息
+4. 支持数据导入导出
+
+### 3. 数据管理
+
+1. 拖拽文件到上传区域或点击选择文件
+2. 支持JSON、CSV、Excel格式
+3. 查看文件列表和统计信息
+4. 支持批量操作
+
+### 4. 数据分析
+
+1. 查看系统统计信息
+2. 分析研究趋势
+3. 查看热门作者和机构
+4. 生成各种图表
+
+## 🛠️ 开发指南
+
+### 添加新功能
+
+1. **后端**: 在相应的service和controller中添加方法
+2. **前端**: 在components目录下创建新组件
+3. **API**: 更新API文档和接口定义
+
+### 自定义样式
+
+编辑 `frontend/app/globals.css` 添加自定义样式类。
+
+### 添加新图表
+
+在 `ChartDisplay.tsx` 中添加新的图表类型配置。
+
+## 🐛 故障排除
+
+### 常见问题
+
+1. **端口冲突**: 确保8080和3000端口未被占用
+2. **数据库连接**: 检查数据库服务是否启动
+3. **依赖安装**: 使用 `npm install --legacy-peer-deps`
+4. **API调用**: 检查后端服务是否正常运行
+
+### 日志查看
+
+- 后端日志: 控制台输出
+- 前端日志: 浏览器开发者工具
+
+## 📄 许可证
+
+MIT License
+
+## 🤝 贡献
+
+欢迎提交Issue和Pull Request来改进项目。
+
+## 📞 联系方式
+
+如有问题，请通过以下方式联系：
+
+- 项目Issues: [GitHub Issues](https://github.com/your-repo/issues)
+- 邮箱: your-email@example.com
+
+---
+
+**AI-Yunxun** - 让知识图谱更智能，让数据更易理解！
