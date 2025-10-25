@@ -1,0 +1,85 @@
+version: "3.9"
+services:
+  ollama:
+    container_name: ollama-ai-yunxun
+    image: ollama/ollama:latest
+    ports:
+      - "11434:11434"
+    volumes:
+      - ./models:/root/.ollama/models
+    restart: always
+    entrypoint: >
+      /bin/bash -c "
+      ollama serve &
+      sleep 5 &&
+      ollama pull deepseek-coder:6.7b &&
+      tail -f /dev/null
+      "
+  # MySQL 服务
+  mysql:
+    image: mysql:8.0
+    container_name: mysql-ai-yunxun
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: Root1234$!
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql  # 数据持久化
+    command:
+      --character-set-server=utf8mb4
+      --collation-server=utf8mb4_unicode_ci
+      --default-authentication-plugin=mysql_native_password
+    healthcheck: # 新增健康检查
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "metabase_user", "-pMetabase@123" ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # MongoDB 服务
+  mongodb:
+    image: mongo:8
+    container_name: mongo-ai-yunxun
+    restart: always
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db  # 数据持久化
+
+  # Redis 服务
+  redis:
+    image: redis:8
+    container_name: redis-ai-yunxun
+    restart: always
+    command: redis-server
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data  # 数据持久化
+
+  # Neo4j 服务
+  neo4j:
+    image: neo4j:community
+    container_name: neo4j-ai-yunxun
+    restart: always
+    environment:
+      NEO4J_AUTH: neo4j/zwb123456
+      NEO4J_dbms_memory_heap_initial__size: 512m
+      NEO4J_dbms_memory_heap_max__size: 1g
+    ports:
+      - "7474:7474"  # 浏览器界面
+      - "7687:7687"  # 程序连接端口
+    volumes:
+      - neo4j_data:/data
+      - neo4j_logs:/logs
+      - neo4j_import:/var/lib/neo4j/import
+      - neo4j_plugins:/plugins
+
+volumes:
+  mysql_data:
+  mongo_data:
+  redis_data:
+  neo4j_data:
+  neo4j_logs:
+  neo4j_import:
+  neo4j_plugins:

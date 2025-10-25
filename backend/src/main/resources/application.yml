@@ -3,15 +3,15 @@ server:
 
 spring:
   application:
-    name: academic-knowledge-graph
+    name: AI-Yunxun
 
   # ==========================
   # MySQL Database
   # ==========================
   datasource:
-    url: jdbc:mysql://localhost:3306/academic_kg?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+    url: jdbc:mysql://localhost:3306/ai_yunxun?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
     username: root
-    password: 123456
+    password: Root1234$!
     driver-class-name: com.mysql.cj.jdbc.Driver
   jpa:
     hibernate:
@@ -26,7 +26,7 @@ spring:
   # ==========================
   data:
     mongodb:
-      uri: mongodb://localhost:27017/academic_kg
+      uri: mongodb://localhost:27017/ai_yunxun
     redis:
       host: localhost
       port: 6379
@@ -40,25 +40,14 @@ spring:
     uri: bolt://localhost:7687
     authentication:
       username: neo4j
-      password: 123456
+      password: zwb123456
 
-          # ==========================
-          # Spring AI
-          # ==========================
-          ai:
-            openai:
-              api-key: ${OPENAI_API_KEY:sk-xxxxxxxxxxxxxxxxxxxxxxxx}
-              base-url: https://api.openai.com/v1
-              chat:
-                options:
-                  model: gpt-4o-mini
-                  temperature: 0.7
-                  max-tokens: 2000
-            vectorstore:
-              chroma:
-                host: localhost
-                port: 8000
-                collection-name: academic-papers
+  # ==========================
+  # Spring AI
+  # ==========================
+  ai:
+    ollama:
+
 
   # ==========================
   # Security
