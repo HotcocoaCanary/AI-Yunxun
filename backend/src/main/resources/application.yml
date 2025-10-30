@@ -10,8 +10,8 @@ spring:
   # ==========================
   datasource:
     url: jdbc:mysql://localhost:3306/ai_yunxun?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
-    username: root
-    password: Root1234$!
+    username: ai_yunxun
+    password: ai_yunxun
     driver-class-name: com.mysql.cj.jdbc.Driver
   jpa:
     hibernate:
@@ -26,12 +26,16 @@ spring:
   # ==========================
   data:
     mongodb:
-      uri: mongodb://localhost:27017/ai_yunxun
+      host: localhost
+      port: 27017
+      username: ai_yunxun
+      password: ai_yunxun
     redis:
       host: localhost
       port: 6379
       database: 0
       timeout: 3000ms
+      password: ai_yunxun
 
   # ==========================
   # Neo4j

@@ -1,12 +1,14 @@
 version: "3.9"
+
 services:
+  # Ollama 服务（大模型推理）
   ollama:
     container_name: ollama-ai-yunxun
     image: ollama/ollama:latest
     ports:
       - "11434:11434"
     volumes:
-      - ./models:/root/.ollama/models
+      - ./docker/volumes/ollama/models:/root/.ollama/models
     restart: always
     entrypoint: >
       /bin/bash -c "
@@ -15,23 +17,27 @@ services:
       ollama pull deepseek-coder:6.7b &&
       tail -f /dev/null
       "
+
   # MySQL 服务
   mysql:
     image: mysql:8.0
     container_name: mysql-ai-yunxun
     restart: always
     environment:
-      MYSQL_ROOT_PASSWORD: Root1234$!
+      MYSQL_ROOT_PASSWORD: ai_yunxun
+      MYSQL_DATABASE: ai_yunxun
+      MYSQL_USER: ai_yunxun
+      MYSQL_PASSWORD: ai_yunxun
     ports:
       - "3306:3306"
     volumes:
-      - mysql_data:/var/lib/mysql  # 数据持久化
+      - ./docker/volumes/mysql:/var/lib/mysql
     command:
       --character-set-server=utf8mb4
       --collation-server=utf8mb4_unicode_ci
       --default-authentication-plugin=mysql_native_password
-    healthcheck: # 新增健康检查
-      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "metabase_user", "-pMetabase@123" ]
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "ai_yunxun", "-pai_yunxun"]
       interval: 5s
       timeout: 5s
       retries: 10
@@ -43,19 +49,24 @@ services:
     restart: always
     ports:
       - "27017:27017"
+    environment:
+      MONGO_INITDB_DATABASE: ai_yunxun
+      MONGO_INITDB_ROOT_USERNAME: ai_yunxun
+      MONGO_INITDB_ROOT_PASSWORD: ai_yunxun
     volumes:
-      - mongo_data:/data/db  # 数据持久化
+      - ./docker/volumes/mongo:/data/db
+      - ./docker/init/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
 
   # Redis 服务
   redis:
     image: redis:8
     container_name: redis-ai-yunxun
     restart: always
-    command: redis-server
+    command: redis-server --requirepass ai_yunxun
     ports:
       - "6379:6379"
     volumes:
-      - redis_data:/data  # 数据持久化
+      - ./docker/volumes/redis:/data
 
   # Neo4j 服务
   neo4j:
@@ -63,23 +74,21 @@ services:
     container_name: neo4j-ai-yunxun
     restart: always
     environment:
-      NEO4J_AUTH: neo4j/zwb123456
+      NEO4J_AUTH: neo4j/ai_yunxun
       NEO4J_dbms_memory_heap_initial__size: 512m
       NEO4J_dbms_memory_heap_max__size: 1g
     ports:
       - "7474:7474"  # 浏览器界面
       - "7687:7687"  # 程序连接端口
     volumes:
-      - neo4j_data:/data
-      - neo4j_logs:/logs
-      - neo4j_import:/var/lib/neo4j/import
-      - neo4j_plugins:/plugins
+      - ./docker/volumes/neo4j/data:/data
+      - ./docker/volumes/neo4j/logs:/logs
+      - ./docker/volumes/neo4j/import:/var/lib/neo4j/import
+      - ./docker/volumes/neo4j/plugins:/plugins
 
 volumes:
-  mysql_data:
-  mongo_data:
-  redis_data:
-  neo4j_data:
-  neo4j_logs:
-  neo4j_import:
-  neo4j_plugins:
+  mysql:
+  mongo:
+  redis:
+  neo4j:
+  ollama:
