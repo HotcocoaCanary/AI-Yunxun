@@ -8,7 +8,7 @@ services:
     ports:
       - "11434:11434"
     volumes:
-      - ./docker/volumes/ollama/models:/root/.ollama/models
+      - ollama:/root/.ollama/models
     restart: always
     entrypoint: >
       /bin/bash -c "
@@ -31,13 +31,13 @@ services:
     ports:
       - "3306:3306"
     volumes:
-      - ./docker/volumes/mysql:/var/lib/mysql
+      - mysql:/var/lib/mysql
     command:
       --character-set-server=utf8mb4
       --collation-server=utf8mb4_unicode_ci
       --default-authentication-plugin=mysql_native_password
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "ai_yunxun", "-pai_yunxun"]
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "ai_yunxun", "-pai_yunxun" ]
       interval: 5s
       timeout: 5s
       retries: 10
@@ -54,8 +54,7 @@ services:
       MONGO_INITDB_ROOT_USERNAME: ai_yunxun
       MONGO_INITDB_ROOT_PASSWORD: ai_yunxun
     volumes:
-      - ./docker/volumes/mongo:/data/db
-      - ./docker/init/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
+      - mongo:/data/db
 
   # Redis 服务
   redis:
@@ -66,7 +65,7 @@ services:
     ports:
       - "6379:6379"
     volumes:
-      - ./docker/volumes/redis:/data
+      - redis:/data
 
   # Neo4j 服务
   neo4j:
@@ -81,14 +80,17 @@ services:
       - "7474:7474"  # 浏览器界面
       - "7687:7687"  # 程序连接端口
     volumes:
-      - ./docker/volumes/neo4j/data:/data
-      - ./docker/volumes/neo4j/logs:/logs
-      - ./docker/volumes/neo4j/import:/var/lib/neo4j/import
-      - ./docker/volumes/neo4j/plugins:/plugins
+      - neo4j_data:/data
+      - neo4j_logs:/logs
+      - neo4j_import:/var/lib/neo4j/import
+      - neo4j_plugins:/plugins
 
 volumes:
   mysql:
   mongo:
   redis:
-  neo4j:
+  neo4j_data:
+  neo4j_logs:
+  neo4j_import:
+  neo4j_plugins:
   ollama:
