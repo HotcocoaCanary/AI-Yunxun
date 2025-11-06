@@ -5,6 +5,7 @@ import yunxun.ai.canary.backend.model.entity.graph.BaseRelationship;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public interface GraphService {
 
@@ -12,7 +13,7 @@ public interface GraphService {
     void registerNode(Class<? extends BaseNode> nodeClass);
     void registerRelationship(Class<? extends BaseRelationship> relClass);
     void unregisterNode(String label);
-    void unregisterRelationship(String type);
+    void unregisterRelationship(String label);
 
     // ==== 节点操作 ====
     void addNode(BaseNode node);
@@ -29,10 +30,12 @@ public interface GraphService {
 
     // ==== 查询 ====
     List<Map<String, Object>> queryByNodeLabel(String label);
-    List<Map<String, Object>> queryByRelationshipType(String type);
-    List<Map<String, Object>> queryByProperty(String key, String valuePattern);
+    List<Map<String, Object>> queryByRelationshipLabel(String label);
+    List<Map<String, Object>> queryByProperty(Map<String, Object> keyValue);
 
     // ==== 工具 ====
     boolean isNodeRegistered(String label);
     boolean isRelationshipRegistered(String type);
+    BaseNode getNodeById(String nodeId);
+    BaseRelationship getRelationshipById(String relationshipId);
 }

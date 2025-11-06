@@ -22,12 +22,39 @@ public class GraphServiceImpl implements GraphService {
     private final NodeRegisterRepository nodeRegisterRepository;
     private final RelationshipRegisterRepository relationshipRegisterRepository;
 
-    // ==== 模型注册管理 ====
+
+    // ========================
+    // 工具
+    // ========================
+
+    @Override
+    public boolean isNodeRegistered(String label) {
+        return nodeRegisterRepository.findByLabelAndDeletedFalse(label).isPresent();
+    }
+
+    @Override
+    public boolean isRelationshipRegistered(String type) {
+        return relationshipRegisterRepository.findByLabelAndDeletedFalse(type).isPresent();
+    }
+
+    @Override
+    public BaseNode getNodeById(String nodeId) {
+        return graphRepository.getBaseNodeByNodeId(nodeId);
+    }
+
+    @Override
+    public BaseRelationship getRelationshipById(String relationshipId) {
+        return graphRepository.getBaseRelationshipByRelationshipId(relationshipId);
+    }
+
+    // ========================
+    // 模型注册管理
+    // ========================
 
     @Override
     @Transactional
     public void registerNode(Class<? extends BaseNode> nodeClass) {
-        String label = nodeClass.getSimpleName();
+        String label = nodeClass.getSimpleName().replace("Node", "");
         nodeRegisterRepository.findByLabelAndDeletedFalse(label)
                 .orElseGet(() -> nodeRegisterRepository.save(
                         NodeRegister.builder()
@@ -41,7 +68,7 @@ public class GraphServiceImpl implements GraphService {
     @Override
     @Transactional
     public void registerRelationship(Class<? extends BaseRelationship> relClass) {
-        String label = relClass.getSimpleName();
+        String label = relClass.getSimpleName().replace("Relationship", "");
         relationshipRegisterRepository.findByLabelAndDeletedFalse(label)
                 .orElseGet(() -> relationshipRegisterRepository.save(
                         RelationshipRegister.builder()
@@ -64,7 +91,9 @@ public class GraphServiceImpl implements GraphService {
         relationshipRegisterRepository.softDeleteByLabel(label);
     }
 
-    // ==== 节点操作 ====
+    // ========================
+    // 节点操作
+    // ========================
 
     @Override
     @Transactional
@@ -87,6 +116,7 @@ public class GraphServiceImpl implements GraphService {
     @Override
     @Transactional
     public void updateNodeProperties(String nodeId, Map<String, Object> updates) {
+        if (updates == null || updates.isEmpty()) return;
         BaseNode temp = new BaseNode("Temp") {};
         temp.setProperties(updates);
         graphRepository.updateNodeProperties(nodeId, temp);
@@ -96,10 +126,16 @@ public class GraphServiceImpl implements GraphService {
     @Transactional
     public void deleteNode(String nodeId) {
         graphRepository.deleteNode(nodeId);
-        // 这里不直接知道 label，可在上层业务中传入 label 来同步更新计数
+        // 可扩展：通过 getNodeById(nodeId) 获取 label 并更新注册计数
+        BaseNode node = getNodeById(nodeId);
+        if (node != null) {
+            nodeRegisterRepository.updateCountByLabel(node.getLabel(), nodeRegisterRepository.findByLabelAndDeletedFalse(node.getLabel()).get().getCount() - 1);
+        }
     }
 
-    // ==== 关系操作 ====
+    // ========================
+    // 关系操作
+    // ========================
 
     @Override
     @Transactional
@@ -122,6 +158,7 @@ public class GraphServiceImpl implements GraphService {
     @Override
     @Transactional
     public void updateRelationshipProperties(String relationshipId, Map<String, Object> updates) {
+        if (updates == null || updates.isEmpty()) return;
         BaseRelationship temp = new BaseRelationship("Temp", null, null) {};
         temp.setProperties(updates);
         graphRepository.updateRelationshipProperties(relationshipId, temp);
@@ -133,7 +170,9 @@ public class GraphServiceImpl implements GraphService {
         graphRepository.deleteRelationship(relationshipId);
     }
 
-    // ==== 高级操作 ====
+    // ========================
+    // 高级操作
+    // ========================
 
     @Override
     @Transactional
@@ -141,36 +180,39 @@ public class GraphServiceImpl implements GraphService {
         BaseNode startNode = new BaseNode("TempStart") {{ setId(startNodeId); }};
         BaseNode endNode = new BaseNode("TempEnd") {{ setId(endNodeId); }};
         BaseRelationship rel = new BaseRelationship(relationshipType, startNode, endNode) {};
-        rel.setProperties(props);
+        if (props != null) rel.setProperties(props);
         addRelationship(rel);
     }
 
-    // ==== 查询 ====
-    // 这里假设未来实现，可通过 Neo4j 查询；当前先空实现。
+    // ========================
+    // 查询
+    // ========================
+
     @Override
     public List<Map<String, Object>> queryByNodeLabel(String label) {
-        return Collections.emptyList();
+        String cypher = String.format("MATCH (n:%s) RETURN n", label);
+        return graphRepository.runCypherQuery(cypher);
     }
 
     @Override
-    public List<Map<String, Object>> queryByRelationshipType(String type) {
-        return Collections.emptyList();
+    public List<Map<String, Object>> queryByRelationshipLabel(String label) {
+        String cypher = String.format("MATCH ()-[r:%s]->() RETURN r", label);
+        return graphRepository.runCypherQuery(cypher);
     }
 
     @Override
-    public List<Map<String, Object>> queryByProperty(String key, String valuePattern) {
-        return Collections.emptyList();
-    }
+    public List<Map<String, Object>> queryByProperty(Map<String, Object> keyValue) {
+        if (keyValue == null || keyValue.isEmpty()) return Collections.emptyList();
 
-    // ==== 工具 ====
+        // 拼接 WHERE 条件
+        StringBuilder whereClause = new StringBuilder();
+        List<String> keys = new ArrayList<>(keyValue.keySet());
+        for (int i = 0; i < keys.size(); i++) {
+            whereClause.append("n.").append(keys.get(i)).append(" = $").append(keys.get(i));
+            if (i < keys.size() - 1) whereClause.append(" AND ");
+        }
 
-    @Override
-    public boolean isNodeRegistered(String label) {
-        return nodeRegisterRepository.findByLabelAndDeletedFalse(label).isPresent();
-    }
-
-    @Override
-    public boolean isRelationshipRegistered(String type) {
-        return relationshipRegisterRepository.findByLabelAndDeletedFalse(type).isPresent();
+        String cypher = String.format("MATCH (n) WHERE %s RETURN n", whereClause);
+        return graphRepository.runCypherQuery(cypher);
     }
 }
