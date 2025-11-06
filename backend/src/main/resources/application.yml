@@ -14,6 +14,11 @@ spring:
     password: ai_yunxun
     driver-class-name: com.mysql.cj.jdbc.Driver
 
+  jpa:
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQL8Dialect
+
   data:
     # ==========================
     # MongoDB
@@ -43,6 +48,21 @@ spring:
       password: ai_yunxun
 
   ai:
+    mcp:
+      server:
+        enabled: true
+        name: mcp-server
+        version: 1.0.0
+        sse-endpoint: /sse
+        sse-message-endpoint: /mcp/message
+        capabilities:
+          tool: true
+          resource: true
+          prompt: true
+      client:
+        enabled: true
+        name: mcp-client
+        version: 1.0.0
     ollama:
       base-url: http://localhost:11434
       embedding:
@@ -68,12 +88,7 @@ logging:
     io.lettuce.core: INFO
     org.mongodb.driver: INFO
     org.neo4j.driver: INFO
+    io.modelcontextprotocol: TRACE
+    org.springframework.ai.mcp: TRACE
   file:
     name: backend/src/main/java/yunxun/ai/canary/backend/logs/app.log
-
-# ==========================
-# MyBatis-Plus
-# ==========================
-mybatis-plus:
-  configuration:
-    log-impl: org.apache.ibatis.logging.slf4j.Slf4jImpl
