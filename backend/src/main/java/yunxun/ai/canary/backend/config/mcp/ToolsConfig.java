@@ -5,13 +5,13 @@ import org.springframework.ai.tool.ToolCallbackProvider;
 import org.springframework.ai.tool.method.MethodToolCallbackProvider;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import yunxun.ai.canary.backend.service.mcp.tools.Neo4jGraphTool;
+import yunxun.ai.canary.backend.service.mcp.tools.GraphTool;
 
 @Configuration
 public class ToolsConfig {
 
     @Resource
-    private Neo4jGraphTool neo4jGraphTool;
+    private GraphTool neo4jGraphTool;
 
     @Bean
     public ToolCallbackProvider neo4jTool() {

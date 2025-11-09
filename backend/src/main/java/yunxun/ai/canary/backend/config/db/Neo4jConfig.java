@@ -10,14 +10,6 @@ import org.springframework.context.annotation.Configuration;
 
 /**
  * Neo4j 配置类（支持从 Spring 环境配置中读取）
- * 推荐配置位置：
- * application.yml:
- * spring:
- *   neo4j:
- *     uri: bolt://localhost:7687
- *     authentication:
- *       username: neo4j
- *       password: password
  */
 @Configuration
 public class Neo4jConfig {

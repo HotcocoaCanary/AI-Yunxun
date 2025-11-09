@@ -9,7 +9,7 @@ import java.util.Map;
 @Data
 public abstract class BaseRelationship {
     protected String id;
-    protected String label;
+    protected String label; // 关系标签，如 "use"
     protected BaseNode startNode;
     protected BaseNode endNode;
     protected Map<String, Object> properties = new HashMap<>();
