@@ -40,7 +40,7 @@ public class RagTool {
         return ragPipelineService.similaritySearch(query, topK, similarityThreshold).stream()
                 .map(doc -> {
                     Map<String, Object> payload = new HashMap<>(doc.getMetadata());
-                    payload.put("content", doc.getContent());
+                    payload.put("content", doc.getText());
                     return payload;
                 })
                 .collect(Collectors.toList());

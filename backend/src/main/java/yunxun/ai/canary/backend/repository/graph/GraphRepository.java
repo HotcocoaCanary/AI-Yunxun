@@ -115,7 +115,10 @@ public class GraphRepository {
         try (Session session = driver.session()) {
             session.executeWrite(tx -> {
                 String cypher = String.format(
-                        "MATCH (a:%s {id: $startId}), (b:%s {id: $endId}) " +
+                        "MERGE (a:%s {id: $startId}) " +
+                                "SET a += $startProperties " +
+                                "MERGE (b:%s {id: $endId}) " +
+                                "SET b += $endProperties " +
                                 "MERGE (a)-[r:%s {id: $id}]->(b) " +
                                 "SET r += $properties",
                         rel.getStartNode().getLabel(),
@@ -126,6 +129,8 @@ public class GraphRepository {
                 params.put("id", rel.getId());
                 params.put("startId", rel.getStartNode().getId());
                 params.put("endId", rel.getEndNode().getId());
+                params.put("startProperties", rel.getStartNode().getProperties());
+                params.put("endProperties", rel.getEndNode().getProperties());
                 params.put("properties", rel.getProperties());
                 tx.run(cypher, params);
                 return null;
@@ -185,6 +190,50 @@ public class GraphRepository {
                     list.add(record.asMap());
                 }
                 return list;
+            });
+        }
+    }
+
+    // Convenience APIs used by repository tests and tooling layers
+
+    public void addNode(BaseNode node) {
+        createOrUpdateNode(node);
+    }
+
+    public void updateNodeProperties(String id, BaseNode node) {
+        if (node.getId() == null) {
+            node.setId(id);
+        }
+        createOrUpdateNode(node);
+    }
+
+    public void deleteNode(String id) {
+        try (Session session = driver.session()) {
+            session.executeWrite(tx -> {
+                String cypher = "MATCH (n {id: $id}) DETACH DELETE n";
+                tx.run(cypher, Values.parameters("id", id));
+                return null;
+            });
+        }
+    }
+
+    public void addRelationship(BaseRelationship relationship) {
+        createOrUpdateRelationship(relationship);
+    }
+
+    public void updateRelationshipProperties(String id, BaseRelationship relationship) {
+        if (relationship.getId() == null) {
+            relationship.setId(id);
+        }
+        createOrUpdateRelationship(relationship);
+    }
+
+    public void deleteRelationship(String id) {
+        try (Session session = driver.session()) {
+            session.executeWrite(tx -> {
+                String cypher = "MATCH ()-[r {id: $id}]->() DELETE r";
+                tx.run(cypher, Values.parameters("id", id));
+                return null;
             });
         }
     }

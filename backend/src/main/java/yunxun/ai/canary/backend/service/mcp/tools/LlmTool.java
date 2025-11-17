@@ -3,6 +3,7 @@ package yunxun.ai.canary.backend.service.mcp.tools;
 import jakarta.annotation.Resource;
 import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.ai.tool.annotation.ToolParam;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 import yunxun.ai.canary.backend.algo.llm.LlmService;
 
@@ -16,6 +17,7 @@ import java.util.Map;
 public class LlmTool {
 
     @Resource
+    @Lazy
     private LlmService llmService;
 
     @Tool(name = "llm_answer_question", description = "调用大模型回答问题，可携带额外上下文")

@@ -40,29 +40,95 @@ interface ConversationMessage {
   documents?: AgentDocumentSnippet[];
 }
 
-const initialHistory: HistoryNode[] = [
-  {
-    id: 'folder-default',
-    label: '默认空间',
-    type: 'folder',
-    children: [
-      { id: 'conv-trend', label: 'AI 趋势洞察', type: 'conversation', updatedAt: '10:21' },
-      { id: 'conv-arxiv', label: 'arXiv 论文分析', type: 'conversation', updatedAt: '昨天' },
-    ],
-  },
-];
+interface ConversationSummary {
+  id: string;
+  title: string;
+  updatedAt?: string;
+}
+
+interface AgentMessageDto {
+  role: 'user' | 'assistant';
+  content: string;
+  timestamp?: string;
+}
+
+interface ConversationDetail {
+  id: string;
+  title: string;
+  history: AgentMessageDto[];
+  enabledTools: string[];
+}
+
+const DEFAULT_TOOLS = ['crawler', 'analysis', 'rag'];
 
 export default function AgentWorkbench() {
-  const [history, setHistory] = useState<HistoryNode[]>(initialHistory);
+  const [history, setHistory] = useState<HistoryNode[]>([]);
   const [selectedConversation, setSelectedConversation] = useState<string | undefined>();
   const [conversationId, setConversationId] = useState<string | undefined>();
   const [messages, setMessages] = useState<ConversationMessage[]>([]);
   const [availableTools, setAvailableTools] = useState<ToolInfo[]>([]);
-  const [enabledTools, setEnabledTools] = useState<string[]>(['crawler', 'analysis', 'rag']);
+  const [enabledTools, setEnabledTools] = useState<string[]>(DEFAULT_TOOLS);
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [crawlerSources, setCrawlerSources] = useState<string[]>(['arxiv.org', 'cnki.net']);
   const [newSource, setNewSource] = useState('');
+  const [loadingConversations, setLoadingConversations] = useState(false);
+
+  const formatUpdatedAt = (value?: string) => {
+    if (!value) return undefined;
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return undefined;
+    return date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
+  };
+
+  const refreshConversations = useCallback(async () => {
+    setLoadingConversations(true);
+    try {
+      const response = await fetch('/api/agent/conversations');
+      if (!response.ok) {
+        return;
+      }
+      const data: ConversationSummary[] = await response.json();
+      const folder: HistoryNode = {
+        id: 'folder-default',
+        label: '历史对话',
+        type: 'folder',
+        children: (data || []).map((item) => ({
+          id: item.id,
+          label: item.title || '未命名对话',
+          type: 'conversation',
+          updatedAt: formatUpdatedAt(item.updatedAt),
+        })),
+      };
+      setHistory([folder]);
+    } catch (error) {
+      // ignore
+    } finally {
+      setLoadingConversations(false);
+    }
+  }, []);
+
+  const handleSelectConversation = useCallback(async (id: string) => {
+    setSelectedConversation(id);
+    try {
+      const response = await fetch(`/api/agent/conversations/${id}`);
+      if (!response.ok) {
+        return;
+      }
+      const detail: ConversationDetail = await response.json();
+      setConversationId(detail.id);
+      setEnabledTools(detail.enabledTools?.length ? detail.enabledTools : DEFAULT_TOOLS);
+      const mappedHistory: ConversationMessage[] = (detail.history || []).map((msg, index) => ({
+        id: `${msg.role}-${msg.timestamp || index}`,
+        role: msg.role === 'assistant' ? 'assistant' : 'user',
+        content: msg.content,
+        timestamp: msg.timestamp ?? new Date().toISOString(),
+      }));
+      setMessages(mappedHistory);
+    } catch (error) {
+      // ignore
+    }
+  }, []);
 
   useEffect(() => {
     fetch('/api/agent/tools')
@@ -70,6 +136,10 @@ export default function AgentWorkbench() {
       .then((data) => setAvailableTools(data))
       .catch(() => {});
   }, []);
+
+  useEffect(() => {
+    refreshConversations();
+  }, [refreshConversations]);
 
   const currentPlan = useMemo(() => {
     const lastAssistant = [...messages].reverse().find((msg) => msg.role === 'assistant' && msg.plan);
@@ -106,27 +176,6 @@ export default function AgentWorkbench() {
     setNewSource('');
   };
 
-  const appendHistoryConversation = useCallback((id: string, title: string) => {
-    setHistory((prev) =>
-      prev.map((folder) =>
-        folder.id === 'folder-default'
-          ? {
-              ...folder,
-              children: [
-                ...(folder.children || []),
-                {
-                  id,
-                  label: title,
-                  type: 'conversation',
-                  updatedAt: new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' }),
-                },
-              ],
-            }
-          : folder
-      )
-    );
-  }, []);
-
   const handleSend = async () => {
     if (!inputValue.trim()) return;
     setIsLoading(true);
@@ -162,10 +211,8 @@ export default function AgentWorkbench() {
       };
       setMessages((prev) => [...prev, assistantMessage]);
       setConversationId(data.conversationId);
-      if (!selectedConversation) {
-        setSelectedConversation(data.conversationId);
-        appendHistoryConversation(data.conversationId, data.documents?.[0]?.title || '新对话');
-      }
+      setSelectedConversation(data.conversationId);
+      refreshConversations();
     } catch (error) {
       const failure: ConversationMessage = {
         id: `assistant-${Date.now()}`,
@@ -196,7 +243,11 @@ export default function AgentWorkbench() {
               <span>新对话</span>
             </button>
           </div>
-          <HistoryTree data={history} activeId={selectedConversation} onSelect={setSelectedConversation} />
+          {loadingConversations ? (
+            <div className="text-xs text-gray-400">加载会话...</div>
+          ) : (
+            <HistoryTree data={history} activeId={selectedConversation} onSelect={handleSelectConversation} />
+          )}
         </div>
         <div className="p-4 space-y-4 overflow-y-auto flex-1">
           <ToolTogglePanel tools={availableTools} enabledTools={enabledTools} onToggle={toggleTool} />

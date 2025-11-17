@@ -17,11 +17,14 @@ import yunxun.ai.canary.backend.model.dto.crawler.CrawlResult;
 import yunxun.ai.canary.backend.model.dto.crawler.CrawlTaskRequest;
 import yunxun.ai.canary.backend.model.dto.graph.GraphChartRequest;
 import yunxun.ai.canary.backend.model.dto.graph.GraphIngestionRequest;
+import yunxun.ai.canary.backend.model.entity.agent.AgentConversation;
 import yunxun.ai.canary.backend.model.entity.document.PaperDocument;
+import yunxun.ai.canary.backend.repository.mongo.AgentConversationRepository;
 import yunxun.ai.canary.backend.service.analysis.DataAnalysisService;
 import yunxun.ai.canary.backend.service.crawler.PaperStorageService;
 import yunxun.ai.canary.backend.service.crawler.WebCrawlerService;
 
+import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -30,31 +33,47 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class AgentOrchestratorService {
 
-    private static final String DEFAULT_PLAN_PROMPT = """
-            你是一个科研智能体，需要根据用户问题列出3步以内的行动计划，返回 JSON 数组，元素包含:
+            private static final String DEFAULT_PLAN_PROMPT = """
+            You are a research agent. Create an action plan with at most 3 steps in JSON array form with fields id/title/tool/objective.
             {
               "id": "step-1",
-              "title": "描述",
+              "title": "Describe the action",
               "tool": "crawler|analysis|rag",
-              "objective": "该步骤目标"
+              "objective": "Goal of this step"
             }
             """;
+
+
+
+    private static final List<String> DEFAULT_TOOLS = List.of("crawler", "analysis", "rag");
+    private static final int MAX_HISTORY_ENTRIES = 40;
 
     private final WebCrawlerService webCrawlerService;
     private final PaperStorageService paperStorageService;
     private final DataAnalysisService dataAnalysisService;
     private final LlmService llmService;
     private final RagPipelineService ragPipelineService;
+    private final AgentConversationRepository agentConversationRepository;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     public AgentChatResponse handleChat(AgentChatRequest request) {
+        AgentConversation conversation = loadConversation(request.getConversationId());
+        List<String> activeTools = resolveEnabledTools(request, conversation);
+
         List<AgentPlanStep> plan = buildPlan(request);
         List<String> usedTools = new ArrayList<>();
         List<PaperDocument> documents = new ArrayList<>();
         List<AgentChartPayload> chartPayloads = new ArrayList<>();
         AgentGraphPayload graphPayload = null;
 
+        List<AgentMessage> conversationHistory = new ArrayList<>(Optional.ofNullable(conversation.getHistory()).orElseGet(ArrayList::new));
+        conversationHistory.add(new AgentMessage("user", request.getMessage(), Instant.now()));
+
         for (AgentPlanStep step : plan) {
+            if (!activeTools.contains(step.getTool())) {
+                step.setStatus("skipped");
+                continue;
+            }
             switch (step.getTool()) {
                 case "crawler" -> {
                     usedTools.add("crawler");
@@ -84,6 +103,16 @@ public class AgentOrchestratorService {
                 0.2d
         );
 
+        conversationHistory.add(new AgentMessage("assistant", answer, Instant.now()));
+        conversation.setHistory(trimHistory(conversationHistory));
+        conversation.setEnabledTools(activeTools);
+        if (!StringUtils.hasText(conversation.getTitle())) {
+            conversation.setTitle(request.getMessage().length() > 30
+                    ? request.getMessage().substring(0, 30) + "..."
+                    : request.getMessage());
+        }
+        agentConversationRepository.save(conversation);
+
         List<AgentDocumentSnippet> snippets = documents.stream()
                 .map(doc -> AgentDocumentSnippet.builder()
                         .documentId(doc.getId())
@@ -95,7 +124,7 @@ public class AgentOrchestratorService {
                 .collect(Collectors.toList());
 
         return AgentChatResponse.builder()
-                .conversationId(Optional.ofNullable(request.getConversationId()).orElse(UUID.randomUUID().toString()))
+                .conversationId(conversation.getId())
                 .answer(answer)
                 .plan(plan)
                 .charts(chartPayloads)
@@ -103,6 +132,39 @@ public class AgentOrchestratorService {
                 .documents(snippets)
                 .usedTools(usedTools)
                 .build();
+    }
+
+    private AgentConversation loadConversation(String conversationId) {
+        if (StringUtils.hasText(conversationId)) {
+            return agentConversationRepository.findById(conversationId)
+                    .orElseGet(() -> AgentConversation.builder()
+                            .id(conversationId)
+                            .history(new ArrayList<>())
+                            .enabledTools(new ArrayList<>(DEFAULT_TOOLS))
+                            .build());
+        }
+        return AgentConversation.builder()
+                .id(UUID.randomUUID().toString())
+                .history(new ArrayList<>())
+                .enabledTools(new ArrayList<>(DEFAULT_TOOLS))
+                .build();
+    }
+
+    private List<String> resolveEnabledTools(AgentChatRequest request, AgentConversation conversation) {
+        if (!CollectionUtils.isEmpty(request.getEnabledTools())) {
+            return new ArrayList<>(request.getEnabledTools());
+        }
+        if (!CollectionUtils.isEmpty(conversation.getEnabledTools())) {
+            return new ArrayList<>(conversation.getEnabledTools());
+        }
+        return new ArrayList<>(DEFAULT_TOOLS);
+    }
+
+    private List<AgentMessage> trimHistory(List<AgentMessage> history) {
+        if (history.size() <= MAX_HISTORY_ENTRIES) {
+            return history;
+        }
+        return new ArrayList<>(history.subList(history.size() - MAX_HISTORY_ENTRIES, history.size()));
     }
 
     private List<PaperDocument> executeCrawlerStep(AgentChatRequest request, AgentPlanStep step) {
@@ -127,7 +189,7 @@ public class AgentOrchestratorService {
         dataAnalysisService.ingest(ingestionRequest);
         GraphChartRequest chartRequest = GraphChartRequest.builder()
                 .chartType("bar")
-                .title("论文数量分布")
+                .title("Paper distribution by year")
                 .cypher("MATCH (p:Paper)-[:PUBLISHED_IN]->(y:Year) RETURN y.name as label, COUNT(p) as count ORDER BY count DESC LIMIT 10")
                 .xField("label")
                 .yField("count")
@@ -139,25 +201,25 @@ public class AgentOrchestratorService {
     private String buildContext(List<PaperDocument> documents, List<AgentChartPayload> charts, List<Document> ragDocs) {
         StringBuilder context = new StringBuilder();
         if (!CollectionUtils.isEmpty(documents)) {
-            context.append("最新文献：\n");
+            context.append("Latest papers:\n");
             for (PaperDocument doc : documents) {
                 context.append("- ").append(doc.getTitle()).append(" (").append(doc.getSource()).append(")\n");
                 if (doc.getSummary() != null) {
-                    context.append("  摘要：").append(doc.getSummary()).append("\n");
+                    context.append("  Summary: ").append(doc.getSummary()).append("\n");
                 }
             }
         }
         if (!CollectionUtils.isEmpty(charts)) {
-            context.append("\n图表洞察：\n");
+            context.append("\nChart insights:\n");
             for (AgentChartPayload chart : charts) {
-                context.append("- ").append(chart.getTitle()).append(" 类型: ").append(chart.getChartType()).append("\n");
+                context.append("- ").append(chart.getTitle()).append(" [").append(chart.getChartType()).append("]\n");
             }
         }
         if (!CollectionUtils.isEmpty(ragDocs)) {
-            context.append("\n向量检索片段：\n");
+            context.append("\nVector snippets:\n");
             for (Document doc : ragDocs) {
-                String snippet = Optional.ofNullable(doc.getContent()).orElse("");
-                context.append("- ").append(doc.getMetadata().getOrDefault("title", "未命名")).append("\n");
+                String snippet = Optional.ofNullable(doc.getText()).orElse("");
+                context.append("- ").append(doc.getMetadata().getOrDefault("title", "untitled")).append("\n");
                 context.append("  ")
                         .append(snippet, 0, Math.min(snippet.length(), 300))
                         .append("...\n");
@@ -192,23 +254,23 @@ public class AgentOrchestratorService {
         List<AgentPlanStep> steps = new ArrayList<>();
         steps.add(AgentPlanStep.builder()
                 .id("plan-1")
-                .title("检索最新论文")
+                .title("Crawl the freshest papers")
                 .tool("crawler")
-                .objective("检索问题相关的最新论文数据")
+                .objective("Collect the latest research related to the user question")
                 .status("running")
                 .build());
         steps.add(AgentPlanStep.builder()
                 .id("plan-2")
-                .title("整理向量上下文与图谱数据")
+                .title("Summarize structured insights")
                 .tool("analysis")
-                .objective("构建知识图谱并生成图表数据")
+                .objective("Build graphs/charts to highlight the key findings")
                 .status("pending")
                 .build());
         steps.add(AgentPlanStep.builder()
                 .id("plan-3")
-                .title("生成综合回答")
+                .title("Generate the final answer")
                 .tool("rag")
-                .objective("结合图谱和向量上下文回答用户问题")
+                .objective("Compose a response using the retrieved documents and graph context")
                 .status("pending")
                 .build());
         return steps;

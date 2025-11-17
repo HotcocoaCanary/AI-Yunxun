@@ -5,13 +5,16 @@ import org.neo4j.driver.Driver;
 import org.neo4j.driver.Session;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Import;
 import yunxun.ai.canary.backend.model.entity.graph.BaseNode;
 import yunxun.ai.canary.backend.model.entity.graph.BaseRelationship;
 import yunxun.ai.canary.backend.repository.graph.GraphRepository;
+import yunxun.ai.canary.backend.config.TestAiConfiguration;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest
+@Import(TestAiConfiguration.class)
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class GraphRepositoryImplTest {
 

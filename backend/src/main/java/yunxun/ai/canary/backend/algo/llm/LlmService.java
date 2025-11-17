@@ -1,8 +1,9 @@
 package yunxun.ai.canary.backend.algo.llm;
 
 import org.springframework.ai.chat.client.ChatClient;
-import org.springframework.ai.chat.prompt.Prompt;
+import org.springframework.ai.chat.client.ChatClient.ChatClientRequestSpec;
 import org.springframework.ai.chat.prompt.ChatOptions;
+import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.stereotype.Service;
 import yunxun.ai.canary.backend.algo.llm.prompt.LlmPromptTemplates;
 
@@ -41,13 +42,13 @@ public class LlmService {
     }
 
     private String callModel(Prompt prompt, Double temperature) {
-        ChatClient.CallPromptResponseSpec spec = chatClient.prompt(prompt);
+        ChatClientRequestSpec requestSpec = chatClient.prompt(prompt);
         if (temperature != null) {
             ChatOptions options = ChatOptions.builder()
-                    .withTemperature(temperature.floatValue())
+                    .temperature(temperature)
                     .build();
-            spec = spec.options(options);
+            requestSpec = requestSpec.options(options);
         }
-        return spec.call().content();
+        return requestSpec.call().content();
     }
 }

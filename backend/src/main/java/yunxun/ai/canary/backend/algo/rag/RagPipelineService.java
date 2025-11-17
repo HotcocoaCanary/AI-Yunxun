@@ -48,9 +48,11 @@ public class RagPipelineService {
     }
 
     public List<Document> similaritySearch(String query, int topK, double similarityThreshold) {
-        SearchRequest request = SearchRequest.query(query)
-                .withTopK(topK)
-                .withSimilarityThreshold((float) similarityThreshold);
+        SearchRequest request = SearchRequest.builder()
+                .query(query)
+                .topK(topK)
+                .similarityThreshold(similarityThreshold)
+                .build();
         return vectorStore.similaritySearch(request);
     }
 
@@ -59,7 +61,7 @@ public class RagPipelineService {
         String context = documents.stream()
                 .map(doc -> {
                     Object title = doc.getMetadata().getOrDefault("title", doc.getMetadata().get("documentId"));
-                    return "- 来源: " + (title != null ? title : "未知") + "\n" + doc.getContent();
+                    return "- 来源: " + (title != null ? title : "未知") + "\n" + doc.getText();
                 })
                 .collect(Collectors.joining("\n\n"));
         String answer = llmService.answerWithContext(question, context);
@@ -71,7 +73,7 @@ public class RagPipelineService {
             List<Map<String, Object>> list = new ArrayList<>();
             for (Document document : documents) {
                 Map<String, Object> info = new HashMap<>(document.getMetadata());
-                info.put("content", document.getContent());
+                info.put("content", document.getText());
                 list.add(info);
             }
             return list;

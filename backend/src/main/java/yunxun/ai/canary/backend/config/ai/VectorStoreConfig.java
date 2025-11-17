@@ -7,6 +7,7 @@ import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 
 /**
  * RAG 管线使用的向量存储配置。
@@ -21,6 +22,7 @@ public class VectorStoreConfig {
     private String collectionName;
 
     @Bean
+    @ConditionalOnMissingBean(VectorStore.class)
     public VectorStore vectorStore(EmbeddingModel embeddingModel) {
         ChromaApi chromaApi = ChromaApi.builder()
                 .baseUrl(chromaBaseUrl)
