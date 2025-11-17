@@ -85,6 +85,18 @@ services:
       - neo4j_import:/var/lib/neo4j/import
       - neo4j_plugins:/plugins
 
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: frontend-ai-yunxun
+    restart: on-failure
+    environment:
+      NEXT_PUBLIC_API_URL: http://host.docker.internal:8080
+    ports:
+      - "3000:3000"
+    command: ["npm","run","start"]
+
 volumes:
   mysql:
   mongo:
