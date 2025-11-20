@@ -28,6 +28,8 @@ spring:
       port: 27017
       username: ai_yunxun
       password: ai_yunxun
+      authentication-database: admin
+      database: ai_yunxun
     # ==========================
     # Redis
     # ==========================
@@ -65,18 +67,11 @@ spring:
         version: 1.0.0
     ollama:
       base-url: http://localhost:11434
+      chat:
+        options:
+          model: qwen3:8b
       embedding:
         model: qwen3:8b
-    chat:
-      memory:
-        repository:
-          neo4j:
-            media-label:
-            metadata-label:
-            message-label:
-            tool-call-label:
-            session-label:
-            tool-response-label:
 
 app:
   rag:

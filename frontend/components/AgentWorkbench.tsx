@@ -1,94 +1,83 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Loader2, Plus, Settings, User2 } from 'lucide-react';
-import clsx from 'clsx';
-import HistoryTree, { HistoryNode } from '@/components/HistoryTree';
-import ToolTogglePanel, { ToolInfo } from '@/components/ToolTogglePanel';
-import PlanTimeline, { PlanStep } from '@/components/PlanTimeline';
-import ChartGallery from '@/components/ChartGallery';
-import GraphRenderer from '@/components/GraphRenderer';
-import ReactMarkdown from 'react-markdown';
+import {
+  FormEvent,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 
-interface AgentChartPayload {
-  chartType: string;
-  title: string;
-  options: Record<string, any>;
-}
-
-interface AgentGraphPayload {
-  nodes?: any[];
-  links?: any[];
-}
-
-interface AgentDocumentSnippet {
-  documentId: string;
-  title: string;
-  summary: string;
-  source: string;
-  url: string;
-}
-
-interface ConversationMessage {
-  id: string;
-  role: 'user' | 'assistant';
-  content: string;
-  timestamp: string;
-  plan?: PlanStep[];
-  charts?: AgentChartPayload[];
-  graph?: AgentGraphPayload | null;
-  documents?: AgentDocumentSnippet[];
-}
-
-interface ConversationSummary {
-  id: string;
-  title: string;
-  updatedAt?: string;
-}
-
-interface AgentMessageDto {
-  role: 'user' | 'assistant';
-  content: string;
-  timestamp?: string;
-}
-
-interface ConversationDetail {
-  id: string;
-  title: string;
-  history: AgentMessageDto[];
-  enabledTools: string[];
-}
+import '@/styles/agent.css';
+import ConversationPanel from '@/components/agent/ConversationPanel';
+import HeroSection from '@/components/agent/HeroSection';
+import PersonalDrawer from '@/components/agent/PersonalDrawer';
+import SidebarNav from '@/components/agent/SidebarNav';
+import type {
+  AgentChatResponse,
+  AgentDocumentSnippet,
+  ConversationDetail,
+  ConversationMessage,
+  ConversationSummary,
+} from '@/components/agent/types';
+import type { ToolInfo } from '@/components/ToolTogglePanel';
+import type { HistoryNode } from '@/components/HistoryTree';
+import {
+  fetchConversations,
+  fetchConversationDetail,
+  fetchTools,
+  postChat,
+} from '@/lib/agent-api';
 
 const DEFAULT_TOOLS = ['crawler', 'analysis', 'rag'];
+const HERO_PROMPTS = [
+  '今天有什么计划？',
+  '我可以帮你做什么？',
+  '开始新的研究对话？',
+  '告诉我你的灵感，我来完善它。',
+];
 
 export default function AgentWorkbench() {
   const [history, setHistory] = useState<HistoryNode[]>([]);
-  const [selectedConversation, setSelectedConversation] = useState<string | undefined>();
+  const [selectedConversation, setSelectedConversation] = useState<
+    string | undefined
+  >();
   const [conversationId, setConversationId] = useState<string | undefined>();
   const [messages, setMessages] = useState<ConversationMessage[]>([]);
   const [availableTools, setAvailableTools] = useState<ToolInfo[]>([]);
   const [enabledTools, setEnabledTools] = useState<string[]>(DEFAULT_TOOLS);
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [crawlerSources, setCrawlerSources] = useState<string[]>(['arxiv.org', 'cnki.net']);
-  const [newSource, setNewSource] = useState('');
   const [loadingConversations, setLoadingConversations] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [personalDrawerOpen, setPersonalDrawerOpen] = useState(false);
+  const [crawlerSources, setCrawlerSources] = useState<string[]>([
+    'arxiv.org',
+    'cnki.net',
+  ]);
+  const [newSource, setNewSource] = useState('');
+  const conversationEndRef = useRef<HTMLDivElement | null>(null);
+
+  const heroTitle = useMemo(() => {
+    const index = Math.floor(Math.random() * HERO_PROMPTS.length);
+    return HERO_PROMPTS[index];
+  }, []);
 
   const formatUpdatedAt = (value?: string) => {
     if (!value) return undefined;
     const date = new Date(value);
     if (Number.isNaN(date.getTime())) return undefined;
-    return date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
+    return date.toLocaleTimeString('zh-CN', {
+      hour: '2-digit',
+      minute: '2-digit',
+    });
   };
 
   const refreshConversations = useCallback(async () => {
     setLoadingConversations(true);
     try {
-      const response = await fetch('/api/agent/conversations');
-      if (!response.ok) {
-        return;
-      }
-      const data: ConversationSummary[] = await response.json();
+      const data = await fetchConversations<ConversationSummary[]>();
       const folder: HistoryNode = {
         id: 'folder-default',
         label: '历史对话',
@@ -101,8 +90,6 @@ export default function AgentWorkbench() {
         })),
       };
       setHistory([folder]);
-    } catch (error) {
-      // ignore
     } finally {
       setLoadingConversations(false);
     }
@@ -111,28 +98,27 @@ export default function AgentWorkbench() {
   const handleSelectConversation = useCallback(async (id: string) => {
     setSelectedConversation(id);
     try {
-      const response = await fetch(`/api/agent/conversations/${id}`);
-      if (!response.ok) {
-        return;
-      }
-      const detail: ConversationDetail = await response.json();
+      const detail = await fetchConversationDetail<ConversationDetail>(id);
       setConversationId(detail.id);
-      setEnabledTools(detail.enabledTools?.length ? detail.enabledTools : DEFAULT_TOOLS);
-      const mappedHistory: ConversationMessage[] = (detail.history || []).map((msg, index) => ({
-        id: `${msg.role}-${msg.timestamp || index}`,
-        role: msg.role === 'assistant' ? 'assistant' : 'user',
-        content: msg.content,
-        timestamp: msg.timestamp ?? new Date().toISOString(),
-      }));
+      setEnabledTools(
+        detail.enabledTools?.length ? detail.enabledTools : DEFAULT_TOOLS,
+      );
+      const mappedHistory: ConversationMessage[] = (detail.history || []).map(
+        (msg, index) => ({
+          id: `${msg.role}-${msg.timestamp || index}`,
+          role: msg.role === 'assistant' ? 'assistant' : 'user',
+          content: msg.content,
+          timestamp: msg.timestamp ?? new Date().toISOString(),
+        }),
+      );
       setMessages(mappedHistory);
-    } catch (error) {
-      // ignore
+    } catch {
+      /* ignore */
     }
   }, []);
 
   useEffect(() => {
-    fetch('/api/agent/tools')
-      .then((res) => res.json())
+    fetchTools<ToolInfo[]>()
       .then((data) => setAvailableTools(data))
       .catch(() => {});
   }, []);
@@ -141,23 +127,33 @@ export default function AgentWorkbench() {
     refreshConversations();
   }, [refreshConversations]);
 
+  useEffect(() => {
+    if (conversationEndRef.current) {
+      conversationEndRef.current.scrollIntoView({
+        behavior: 'smooth',
+        block: 'end',
+      });
+    }
+  }, [messages, isLoading]);
+
   const currentPlan = useMemo(() => {
-    const lastAssistant = [...messages].reverse().find((msg) => msg.role === 'assistant' && msg.plan);
+    const lastAssistant = [...messages]
+      .reverse()
+      .find((msg) => msg.role === 'assistant' && msg.plan);
     return lastAssistant?.plan || [];
   }, [messages]);
 
-  const currentCharts = useMemo(() => {
-    const lastAssistant = [...messages].reverse().find((msg) => msg.role === 'assistant' && msg.charts);
-    return lastAssistant?.charts || [];
-  }, [messages]);
-
   const currentGraph = useMemo(() => {
-    const lastAssistant = [...messages].reverse().find((msg) => msg.role === 'assistant' && msg.graph);
-    return lastAssistant?.graph;
+    const lastAssistant = [...messages]
+      .reverse()
+      .find((msg) => msg.role === 'assistant' && msg.graph);
+    return lastAssistant?.graph || null;
   }, [messages]);
 
-  const currentDocs = useMemo(() => {
-    const lastAssistant = [...messages].reverse().find((msg) => msg.role === 'assistant' && msg.documents);
+  const currentDocs = useMemo<AgentDocumentSnippet[]>(() => {
+    const lastAssistant = [...messages]
+      .reverse()
+      .find((msg) => msg.role === 'assistant' && msg.documents);
     return lastAssistant?.documents || [];
   }, [messages]);
 
@@ -172,11 +168,14 @@ export default function AgentWorkbench() {
 
   const handleAddSource = () => {
     if (!newSource.trim()) return;
-    setCrawlerSources((prev) => Array.from(new Set([...prev, newSource.trim()])));
+    setCrawlerSources((prev) =>
+      Array.from(new Set([...prev, newSource.trim()])),
+    );
     setNewSource('');
   };
 
-  const handleSend = async () => {
+  const handleSend = async (event?: FormEvent) => {
+    event?.preventDefault();
     if (!inputValue.trim()) return;
     setIsLoading(true);
     const userMessage: ConversationMessage = {
@@ -193,12 +192,7 @@ export default function AgentWorkbench() {
     };
     setInputValue('');
     try {
-      const response = await fetch('/api/agent/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-      const data = await response.json();
+      const data = await postChat<AgentChatResponse>(payload);
       const assistantMessage: ConversationMessage = {
         id: `assistant-${Date.now()}`,
         role: 'assistant',
@@ -217,161 +211,92 @@ export default function AgentWorkbench() {
       const failure: ConversationMessage = {
         id: `assistant-${Date.now()}`,
         role: 'assistant',
-        content: '调用智能体失败，请检查后端服务或网络配置。',
+        content: '调用智能体失败，请稍后重试。',
         timestamp: new Date().toISOString(),
       };
       setMessages((prev) => [...prev, failure]);
+      console.error(error);
     } finally {
       setIsLoading(false);
     }
   };
 
+  const showEmptyState = messages.length === 0;
+
   return (
-    <div className="h-screen flex bg-gray-50">
-      <aside className="w-80 border-r border-gray-200 flex flex-col bg-white">
-        <div className="p-4 border-b border-gray-100">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <p className="text-sm font-semibold text-gray-900">论文智慧分析</p>
-              <p className="text-xs text-gray-500">MCP Agent 控制台</p>
-            </div>
+    <div className="workspace-shell">
+      <SidebarNav
+        sidebarOpen={sidebarOpen}
+        loadingConversations={loadingConversations}
+        history={history}
+        selectedConversation={selectedConversation}
+        onSelectConversation={handleSelectConversation}
+        onToggleSidebar={() => setSidebarOpen((prev) => !prev)}
+      />
+
+      <div className="workspace-content">
+        <header className="workspace-header">
+          <div>
+            <p className="workspace-header__label">智能体工作台</p>
+            <p className="workspace-header__hint">实时掌握你的多模态研究进度</p>
+          </div>
+          <div className="workspace-header__actions">
             <button
               type="button"
-              className="inline-flex items-center space-x-1 text-xs font-medium text-amber-600"
+              className="ghost-button"
+              onClick={() => refreshConversations()}
             >
-              <Plus className="w-4 h-4" />
-              <span>新对话</span>
+              刷新
+            </button>
+            <button
+              type="button"
+              className="primary-button"
+              onClick={() => setPersonalDrawerOpen(true)}
+            >
+              个人中心
             </button>
           </div>
-          {loadingConversations ? (
-            <div className="text-xs text-gray-400">加载会话...</div>
-          ) : (
-            <HistoryTree data={history} activeId={selectedConversation} onSelect={handleSelectConversation} />
-          )}
-        </div>
-        <div className="p-4 space-y-4 overflow-y-auto flex-1">
-          <ToolTogglePanel tools={availableTools} enabledTools={enabledTools} onToggle={toggleTool} />
-          <div className="rounded-xl border border-gray-200 p-4 bg-white">
-            <p className="text-sm font-semibold text-gray-900 mb-2">爬取站点</p>
-            <div className="space-y-2 mb-3">
-              {crawlerSources.map((source) => (
-                <div key={source} className="flex items-center justify-between text-sm text-gray-600">
-                  <span>{source}</span>
-                </div>
-              ))}
-            </div>
-            <div className="flex space-x-2">
-              <input
-                value={newSource}
-                onChange={(e) => setNewSource(e.target.value)}
-                placeholder="添加站点或 API"
-                className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-amber-500"
-              />
-              <button
-                type="button"
-                onClick={handleAddSource}
-                className="px-3 py-2 rounded-lg bg-amber-500 text-white text-sm"
-              >
-                添加
-              </button>
-            </div>
-          </div>
-        </div>
-        <div className="p-4 border-t border-gray-100">
-          <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center text-amber-600">
-              <User2 className="w-5 h-5" />
-            </div>
-            <div className="flex-1">
-              <p className="text-sm font-semibold text-gray-900">研究者工作台</p>
-              <p className="text-xs text-gray-500">自定义 MCP 工具配置</p>
-            </div>
-            <button className="text-gray-400 hover:text-gray-600" type="button">
-              <Settings className="w-5 h-5" />
-            </button>
-          </div>
-        </div>
-      </aside>
-
-      <main className="flex-1 flex flex-col">
-        <header className="border-b border-gray-200 p-4 bg-white flex items-center justify-between">
-          <div>
-            <p className="text-base font-semibold text-gray-900">智能体对话</p>
-            <p className="text-xs text-gray-500">启用工具：{enabledTools.join(', ') || '无'}</p>
-          </div>
-          {isLoading && (
-            <div className="flex items-center text-sm text-amber-600">
-              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              智能体执行中...
-            </div>
-          )}
         </header>
 
-        <div className="flex-1 overflow-y-auto p-6 space-y-6">
-          <div className="space-y-4">
-            {messages.map((message) => (
-              <div
-                key={message.id}
-                className={message.role === 'user' ? 'ml-auto max-w-3xl' : 'mr-auto max-w-3xl'}
-              >
-                <div
-                  className={clsx(
-                    'rounded-2xl px-4 py-3 shadow-sm',
-                    message.role === 'user' ? 'bg-amber-500 text-white' : 'bg-white border border-gray-200 text-gray-900'
-                  )}
-                >
-                  <ReactMarkdown>{message.content}</ReactMarkdown>
-                </div>
-              </div>
-            ))}
-          </div>
+        <main className="workspace-main">
+          <HeroSection
+            title={heroTitle}
+            inputValue={inputValue}
+            isLoading={isLoading}
+            onInputChange={setInputValue}
+            onSubmit={handleSend}
+          />
 
-          <PlanTimeline steps={currentPlan} />
-
-          <ChartGallery charts={currentCharts} />
-
-          <GraphRenderer graph={currentGraph} />
-
-          {currentDocs.length > 0 && (
-            <div className="card">
-              <p className="text-sm font-semibold text-gray-900 mb-2">上下文文档</p>
-              <div className="space-y-3">
-                {currentDocs.map((doc) => (
-                  <div key={doc.documentId} className="border border-gray-100 rounded-lg p-3">
-                    <div className="flex items-center justify-between">
-                      <p className="text-sm font-medium text-gray-900">{doc.title}</p>
-                      <span className="text-xs text-gray-400">{doc.source}</span>
-                    </div>
-                    <p className="text-xs text-gray-500 overflow-hidden text-ellipsis whitespace-nowrap">
-                      {doc.summary}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-
-        <footer className="border-t border-gray-200 p-4 bg-white">
-          <div className="flex space-x-3">
-            <textarea
-              value={inputValue}
-              onChange={(e) => setInputValue(e.target.value)}
-              placeholder="向智能体描述你的研究需求..."
-              className="flex-1 resize-none border border-gray-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-amber-500"
-              rows={2}
+          {showEmptyState ? (
+            <section className="empty-state">
+              <div className="empty-state__badge">欢迎</div>
+              <h2>开始你的第一个研究任务</h2>
+              <p>左侧选择历史会话，或在上方输入框描述新任务以启动对话。</p>
+            </section>
+          ) : (
+            <ConversationPanel
+              anchorRef={conversationEndRef}
+              messages={messages}
+              isLoading={isLoading}
+              plan={currentPlan}
+              graph={currentGraph}
+              documents={currentDocs}
             />
-            <button
-              type="button"
-              onClick={handleSend}
-              disabled={isLoading || !inputValue.trim()}
-              className="px-6 py-3 rounded-xl bg-amber-500 text-white font-semibold disabled:bg-gray-300 disabled:cursor-not-allowed"
-            >
-              发送
-            </button>
-          </div>
-        </footer>
-      </main>
+          )}
+        </main>
+      </div>
+
+      <PersonalDrawer
+        open={personalDrawerOpen}
+        onClose={() => setPersonalDrawerOpen(false)}
+        availableTools={availableTools}
+        enabledTools={enabledTools}
+        onToggleTool={toggleTool}
+        crawlerSources={crawlerSources}
+        newSource={newSource}
+        onNewSourceChange={setNewSource}
+        onAddSource={handleAddSource}
+      />
     </div>
   );
 }

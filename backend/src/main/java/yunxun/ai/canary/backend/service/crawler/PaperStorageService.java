@@ -1,6 +1,7 @@
 package yunxun.ai.canary.backend.service.crawler;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import yunxun.ai.canary.backend.algo.rag.RagPipelineService;
@@ -13,11 +14,16 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Service
-@RequiredArgsConstructor
 public class PaperStorageService {
 
     private final PaperDocumentRepository paperDocumentRepository;
     private final RagPipelineService ragPipelineService;
+
+    public PaperStorageService(PaperDocumentRepository paperDocumentRepository,
+                               @Lazy RagPipelineService ragPipelineService) {
+        this.paperDocumentRepository = paperDocumentRepository;
+        this.ragPipelineService = ragPipelineService;
+    }
 
     public PaperDocument saveResult(CrawlResult result) {
         PaperDocument document = paperDocumentRepository.findByUrl(result.getUrl())

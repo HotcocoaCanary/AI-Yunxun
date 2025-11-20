@@ -3,6 +3,7 @@ package yunxun.ai.canary.backend.service.mcp.tools;
 import jakarta.annotation.Resource;
 import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.ai.tool.annotation.ToolParam;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 import yunxun.ai.canary.backend.algo.rag.RagPipelineService;
 
@@ -18,6 +19,7 @@ import java.util.stream.Collectors;
 public class RagTool {
 
     @Resource
+    @Lazy
     private RagPipelineService ragPipelineService;
 
     @Tool(name = "rag_ingest_document", description = "将文本写入向量库，供后续 RAG 检索使用")

@@ -1,13 +1,28 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Search, Filter, Download, Upload, RefreshCw } from 'lucide-react';
 import GraphDisplay from './GraphDisplay';
 import ChartDisplay from './ChartDisplay';
 
+interface GraphElement {
+  data?: {
+    id?: string;
+    source?: string;
+    target?: string;
+    [key: string]: unknown;
+  };
+  [key: string]: unknown;
+}
+
+interface GraphData {
+  elements?: GraphElement[];
+  [key: string]: unknown;
+}
+
 export default function KnowledgeGraph() {
   const [searchQuery, setSearchQuery] = useState('');
-  const [graphData, setGraphData] = useState(null);
+  const [graphData, setGraphData] = useState<GraphData | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [filters, setFilters] = useState({
     nodeType: 'all',

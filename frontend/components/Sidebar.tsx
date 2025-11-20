@@ -8,7 +8,7 @@ import {
   Settings,
   HelpCircle
 } from 'lucide-react';
-import { TabType } from '@/app/page';
+type TabType = 'chat' | 'graph' | 'data' | 'analytics';
 
 interface SidebarProps {
   activeTab: TabType;

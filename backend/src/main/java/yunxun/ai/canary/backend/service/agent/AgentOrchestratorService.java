@@ -20,6 +20,7 @@ import yunxun.ai.canary.backend.model.dto.graph.GraphIngestionRequest;
 import yunxun.ai.canary.backend.model.entity.agent.AgentConversation;
 import yunxun.ai.canary.backend.model.entity.document.PaperDocument;
 import yunxun.ai.canary.backend.repository.mongo.AgentConversationRepository;
+import yunxun.ai.canary.backend.service.agent.AgentConversationService;
 import yunxun.ai.canary.backend.service.analysis.DataAnalysisService;
 import yunxun.ai.canary.backend.service.crawler.PaperStorageService;
 import yunxun.ai.canary.backend.service.crawler.WebCrawlerService;
@@ -54,6 +55,7 @@ public class AgentOrchestratorService {
     private final LlmService llmService;
     private final RagPipelineService ragPipelineService;
     private final AgentConversationRepository agentConversationRepository;
+    private final AgentConversationService agentConversationService;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     public AgentChatResponse handleChat(AgentChatRequest request) {
@@ -111,7 +113,7 @@ public class AgentOrchestratorService {
                     ? request.getMessage().substring(0, 30) + "..."
                     : request.getMessage());
         }
-        agentConversationRepository.save(conversation);
+        agentConversationService.saveAsync(conversation);
 
         List<AgentDocumentSnippet> snippets = documents.stream()
                 .map(doc -> AgentDocumentSnippet.builder()
@@ -136,7 +138,7 @@ public class AgentOrchestratorService {
 
     private AgentConversation loadConversation(String conversationId) {
         if (StringUtils.hasText(conversationId)) {
-            return agentConversationRepository.findById(conversationId)
+            return agentConversationService.findById(conversationId)
                     .orElseGet(() -> AgentConversation.builder()
                             .id(conversationId)
                             .history(new ArrayList<>())
