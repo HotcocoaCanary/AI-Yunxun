@@ -1,19 +1,18 @@
 package yunxun.ai.canary.backend.controller;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
-import yunxun.ai.canary.backend.model.dto.chat.AgentQueryPayloadDto;
+import yunxun.ai.canary.backend.model.dto.chat.ChatMessageAppendRequest;
 import yunxun.ai.canary.backend.model.dto.chat.ChatMessageDto;
 import yunxun.ai.canary.backend.model.dto.chat.ChatNodeCreateRequest;
 import yunxun.ai.canary.backend.model.dto.chat.ChatNodeRenameRequest;
 import yunxun.ai.canary.backend.model.dto.chat.ChatTreeNodeDto;
-import yunxun.ai.canary.backend.service.agent.AgentStreamService;
-import yunxun.ai.canary.backend.service.chat.InMemoryChatService;
+import yunxun.ai.canary.backend.model.dto.mcp.McpChatRequest;
+import yunxun.ai.canary.backend.service.agent.chat.ChatHistoryService;
+import yunxun.ai.canary.backend.service.mcp.server.McpClientService;
 
-import java.io.IOException;
 import java.util.List;
 
 @RestController
@@ -21,38 +20,57 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ChatController {
 
-    private final InMemoryChatService chatService;
-    private final AgentStreamService agentStreamService;
-    private final ObjectMapper objectMapper;
+    private final ChatHistoryService chatHistoryService;
+    private final McpClientService mcpClientService;
 
-    @GetMapping("/tree")
-    public List<ChatTreeNodeDto> getTree() {
-        return chatService.getTree();
+    @GetMapping("/sessions")
+    public List<ChatTreeNodeDto> getSessions(@RequestParam(required = false) Long userId) {
+        return chatHistoryService.getTree(resolveUserId(userId));
     }
 
-    @PostMapping("/node")
-    public ChatTreeNodeDto createNode(@RequestBody ChatNodeCreateRequest request) {
-        return chatService.createNode(request);
+    @PostMapping("/sessions")
+    public ChatTreeNodeDto createSession(@RequestParam(required = false) Long userId,
+                                         @RequestBody ChatNodeCreateRequest request) {
+        return chatHistoryService.createNode(request, resolveUserId(userId));
     }
 
-    @PutMapping("/node/{id}")
-    public ChatTreeNodeDto renameNode(@PathVariable String id, @RequestBody ChatNodeRenameRequest request) {
-        return chatService.renameNode(id, request);
+    @PatchMapping("/sessions/{id}")
+    public ChatTreeNodeDto renameSession(@PathVariable Long id,
+                                         @RequestParam(required = false) Long userId,
+                                         @RequestBody ChatNodeRenameRequest request) {
+        return chatHistoryService.renameNode(id, request, resolveUserId(userId));
     }
 
-    @DeleteMapping("/node/{id}")
-    public void deleteNode(@PathVariable String id) {
-        chatService.deleteNode(id);
+    @DeleteMapping("/sessions/{id}")
+    public void deleteSession(@PathVariable Long id, @RequestParam(required = false) Long userId) {
+        chatHistoryService.deleteNode(id, resolveUserId(userId));
     }
 
-    @GetMapping("/session/{sessionId}/messages")
-    public List<ChatMessageDto> getMessages(@PathVariable String sessionId) {
-        return chatService.getMessages(sessionId);
+    @GetMapping("/messages")
+    public List<ChatMessageDto> getMessages(@RequestParam Long sessionId) {
+        return chatHistoryService.getMessages(sessionId);
     }
 
-    @GetMapping(value = "/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-    public SseEmitter stream(@RequestParam("payload") String payload) throws IOException {
-        AgentQueryPayloadDto query = objectMapper.readValue(payload, AgentQueryPayloadDto.class);
-        return agentStreamService.streamAnswer(query);
+    @PostMapping("/messages")
+    public ChatMessageDto appendMessage(@RequestBody ChatMessageAppendRequest request) {
+        return chatHistoryService.appendMessage(request);
+    }
+
+    @PostMapping(value = "/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    public SseEmitter stream(@RequestBody McpChatRequest request) {
+        return mcpClientService.streamChat(request);
+    }
+
+    private Long resolveUserId(Long userIdParam) {
+        if (userIdParam != null) {
+            return userIdParam;
+        }
+        Object principal = org.springframework.security.core.context.SecurityContextHolder.getContext()
+                .getAuthentication() != null ? org.springframework.security.core.context.SecurityContextHolder.getContext()
+                .getAuthentication().getPrincipal() : null;
+        if (principal instanceof Long) {
+            return (Long) principal;
+        }
+        return 1L; // fallback for testing
     }
 }

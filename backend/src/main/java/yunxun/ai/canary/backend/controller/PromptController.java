@@ -5,7 +5,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import yunxun.ai.canary.backend.service.prompt.PromptRegistry;
+import yunxun.ai.canary.backend.service.mcp.prompt.PromptRegistry;
 
 @RestController
 @RequestMapping("/api/prompts")

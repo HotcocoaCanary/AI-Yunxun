@@ -1,14 +1,13 @@
 package yunxun.ai.canary.backend.service.agent;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 import yunxun.ai.canary.backend.model.dto.chart.ChartSpecDto;
 import yunxun.ai.canary.backend.model.dto.chat.AgentQueryPayloadDto;
-import yunxun.ai.canary.backend.model.dto.graph.GraphDataDto;
-import yunxun.ai.canary.backend.service.chat.InMemoryChatService;
-import yunxun.ai.canary.backend.service.graph.GraphMockService;
+import yunxun.ai.canary.backend.model.dto.chat.ChatMessageDto;
+import yunxun.ai.canary.backend.service.agent.chat.InMemoryChatService;
+import yunxun.ai.canary.backend.service.llm.LlmService;
 
 import java.io.IOException;
 import java.time.Instant;
@@ -23,7 +22,7 @@ import java.util.concurrent.TimeUnit;
 public class AgentStreamService {
 
     private final InMemoryChatService chatService;
-    private final GraphMockService graphMockService;
+    private final LlmService llmService;
 
     public SseEmitter streamAnswer(AgentQueryPayloadDto payload) {
         SseEmitter emitter = new SseEmitter(0L);
@@ -32,62 +31,35 @@ public class AgentStreamService {
 
         CompletableFuture.runAsync(() -> {
             try {
-                // 1) 文本片段
                 send(emitter, Map.of("type", "answer_chunk",
-                        "content", "正在读取历史上下文与 Neo4j 子图..."));
-                TimeUnit.MILLISECONDS.sleep(200);
+                        "content", "?????????..."));
+                TimeUnit.MILLISECONDS.sleep(100);
 
-                // 2) 图谱更新
-                GraphDataDto graph = graphMockService.overview();
-                send(emitter, Map.of("type", "graph_update", "graph", graph));
-                TimeUnit.MILLISECONDS.sleep(200);
+                String llmReply = llmService.chat(payload.getQuestion());
+                ChatMessageDto assistant = chatService.appendMessage(sessionId, "assistant", llmReply);
 
-                // 3) 图表更新
-                List<ChartSpecDto> charts = List.of(ChartSpecDto.builder()
-                        .id("chart-1")
-                        .title("最新抓取数据分布")
-                        .type("bar")
-                        .xField("date")
-                        .yField("value")
-                        .data(List.of(
-                                Map.of("date", "2025-01-01", "value", 12),
-                                Map.of("date", "2025-01-02", "value", 18),
-                                Map.of("date", "2025-01-03", "value", 21)
-                        ))
-                        .build());
-                send(emitter, Map.of("type", "chart_update", "charts", charts));
-
-                // 4) 完整文本
-                String finalText = """
-                        已根据当前会话记忆和可用 MCP 工具生成答案：
-                        - 数据已更新并写入 Mongo + Neo4j
-                        - 返回了本次引用的子图与概要图表
-                        """;
-                send(emitter, Map.of("type", "answer_chunk", "content", finalText));
-                var message = chatService.appendMessage(sessionId, "assistant", finalText);
-                chatService.attachGraph(sessionId, message.getId(), graph);
-                chatService.attachCharts(sessionId, message.getId(), charts);
-
-                send(emitter, Map.of("type", "done"));
+                send(emitter, Map.of("type", "answer", "content", assistant.getContent()));
+                send(emitter, Map.of("type", "end", "messageId", assistant.getId()));
                 emitter.complete();
-            } catch (Exception ex) {
-                try {
-                    send(emitter, Map.of("type", "error", "message", ex.getMessage()));
-                } catch (IOException ignored) {
-                    // ignore secondary errors
-                }
-                emitter.completeWithError(ex);
+            } catch (Exception e) {
+                tryCompleteWithError(emitter, e);
             }
         });
         return emitter;
     }
 
-    private void send(SseEmitter emitter, Object payload) throws IOException {
+    private void send(SseEmitter emitter, Map<String, Object> data) throws IOException {
         emitter.send(SseEmitter.event()
-                .data(payload)
                 .id(UUID.randomUUID().toString())
-                .name("message")
-                .reconnectTime(1000)
-                .comment("at " + Instant.now()));
+                .data(data)
+                .reconnectTime(1000L));
+    }
+
+    private void tryCompleteWithError(SseEmitter emitter, Exception e) {
+        try {
+            emitter.completeWithError(e);
+        } catch (IllegalStateException ignored) {
+        }
     }
 }
+

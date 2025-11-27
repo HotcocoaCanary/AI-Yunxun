@@ -4,7 +4,6 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.data.domain.Sort;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import yunxun.ai.canary.backend.model.dto.agent.AgentChatRequest;
 import yunxun.ai.canary.backend.model.dto.agent.AgentChatResponse;
@@ -27,7 +26,7 @@ public class AgentController {
 
     @PostMapping("/chat")
     public ResponseEntity<AgentChatResponse> chat(@Valid @RequestBody AgentChatRequest request) {
-        return ResponseEntity.ok(agentOrchestratorService.handleChat(request));
+        return ResponseEntity.ok(agentOrchestratorService.chat(request));
     }
 
     @GetMapping("/tools")
@@ -65,3 +64,5 @@ public class AgentController {
                 .orElse(ResponseEntity.notFound().build());
     }
 }
+
+

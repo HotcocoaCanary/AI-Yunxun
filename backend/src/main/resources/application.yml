@@ -83,6 +83,13 @@ app:
       - crawler
       - analysis
       - rag
+  security:
+    jwt:
+      secret: change-me
+      access-token-ttl-seconds: 3600
+      refresh-token-ttl-seconds: 604800
+  auth:
+    enabled: true
 
 # ==========================
 # Logging
@@ -97,4 +104,4 @@ logging:
     io.modelcontextprotocol: TRACE
     org.springframework.ai.mcp: TRACE
   file:
-    name: backend/src/main/java/yunxun/ai/canary/backend/logs/app.log
+    name: src/main/java/yunxun/ai/canary/backend/logs/app.log
