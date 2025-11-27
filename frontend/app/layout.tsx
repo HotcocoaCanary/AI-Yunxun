@@ -1,23 +1,21 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
-import "@/styles/globals.css";
+import { Space_Grotesk } from "next/font/google";
+import "@/public/styles/globals.css";
+import "@/public/styles/ui.css";
 
-const inter = Inter({ subsets: ["latin"] });
+const grotesk = Space_Grotesk({ subsets: ["latin"], weight: ["400", "500", "600", "700"] });
 
 export const metadata: Metadata = {
-  title: "AI-Yunxun 智能知识图谱系统",
-  description: "基于图数据库和自然语言实现的学术论文知识图谱系统",
+  title: "AI-Yunxun | 图谱驱动的 MCP 智能体",
+  description:
+    "基于 Mongo + Neo4j + MCP 的可插拔知识图谱智能体，支持流式输出文本 / 子图 / 图表，帮助团队快速构建图谱化问答体验。",
 };
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="zh-CN">
-      <body className={inter.className}>
-        <div className="min-h-screen bg-gray-50">{children}</div>
+      <body className={grotesk.className}>
+        <div className="min-h-screen bg-slate-50">{children}</div>
       </body>
     </html>
   );

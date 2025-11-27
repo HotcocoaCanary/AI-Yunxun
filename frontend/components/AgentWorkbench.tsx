@@ -9,7 +9,7 @@ import {
   useState,
 } from 'react';
 
-import '@/styles/agent.css';
+import '@/public/styles/agent.css';
 import ConversationPanel from '@/components/agent/ConversationPanel';
 import HeroSection from '@/components/agent/HeroSection';
 import PersonalDrawer from '@/components/agent/PersonalDrawer';
