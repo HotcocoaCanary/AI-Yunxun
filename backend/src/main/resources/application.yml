@@ -104,4 +104,4 @@ logging:
     io.modelcontextprotocol: TRACE
     org.springframework.ai.mcp: TRACE
   file:
-    name: src/main/java/yunxun/ai/canary/backend/logs/app.log
+    name: logs/app.log

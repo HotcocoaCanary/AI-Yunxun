@@ -1,0 +1,10 @@
+2025-11-29T15:08:57.431+08:00  WARN 32576 --- [AI-Yunxun] [HikariPool-1:housekeeper] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Thread starvation or clock leap detected (housekeeper delta=1d7h5m57s82ms392µs900ns).
+2025-11-29T15:10:50.045+08:00  INFO 32576 --- [AI-Yunxun] [SpringApplicationShutdownHook] o.s.b.w.e.tomcat.GracefulShutdown        : Commencing graceful shutdown. Waiting for active requests to complete
+2025-11-29T15:10:50.145+08:00  INFO 32576 --- [AI-Yunxun] [tomcat-shutdown] o.s.b.w.e.tomcat.GracefulShutdown        : Graceful shutdown complete
+2025-11-29T15:10:50.155+08:00 DEBUG 32576 --- [AI-Yunxun] [SpringApplicationShutdownHook] i.m.s.t.WebMvcSseServerTransportProvider : Initiating graceful shutdown with 0 active sessions
+2025-11-29T15:10:50.156+08:00 DEBUG 32576 --- [AI-Yunxun] [SpringApplicationShutdownHook] i.m.s.t.WebMvcSseServerTransportProvider : Graceful shutdown completed
+2025-11-29T15:10:50.160+08:00 DEBUG 32576 --- [AI-Yunxun] [SpringApplicationShutdownHook] i.m.s.t.WebMvcSseServerTransportProvider : Initiating graceful shutdown with 0 active sessions
+2025-11-29T15:10:50.160+08:00 DEBUG 32576 --- [AI-Yunxun] [SpringApplicationShutdownHook] i.m.s.t.WebMvcSseServerTransportProvider : Graceful shutdown completed
+2025-11-29T15:10:50.381+08:00  INFO 32576 --- [AI-Yunxun] [SpringApplicationShutdownHook] j.LocalContainerEntityManagerFactoryBean : Closing JPA EntityManagerFactory for persistence unit 'default'
+2025-11-29T15:10:50.386+08:00  INFO 32576 --- [AI-Yunxun] [SpringApplicationShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown initiated...
+2025-11-29T15:10:50.388+08:00  INFO 32576 --- [AI-Yunxun] [SpringApplicationShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown completed.

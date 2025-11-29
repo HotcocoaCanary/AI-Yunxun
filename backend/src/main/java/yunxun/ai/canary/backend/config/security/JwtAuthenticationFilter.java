@@ -12,9 +12,9 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
-import yunxun.ai.canary.backend.model.entity.user.UserEntity;
-import yunxun.ai.canary.backend.repository.mysql.UserMapper;
-import yunxun.ai.canary.backend.service.auth.JwtService;
+import yunxun.ai.canary.backend.user.model.entity.UserEntity;
+import yunxun.ai.canary.backend.user.repository.mysql.UserMapper;
+import yunxun.ai.canary.backend.auth.service.JwtService;
 
 import java.io.IOException;
 import java.util.List;

@@ -6,12 +6,12 @@ import org.springframework.ai.tool.method.MethodToolCallbackProvider;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
-import yunxun.ai.canary.backend.service.mcp.tool.AnalyticsTool;
-import yunxun.ai.canary.backend.service.mcp.tool.CrawlerTool;
-import yunxun.ai.canary.backend.service.mcp.tool.GraphTool;
-import yunxun.ai.canary.backend.service.mcp.tool.LlmTool;
-import yunxun.ai.canary.backend.service.mcp.tool.RagTool;
-import yunxun.ai.canary.backend.service.config.tools.UserToolService;
+import yunxun.ai.canary.backend.mcp.service.tool.AnalyticsTool;
+import yunxun.ai.canary.backend.mcp.service.tool.CrawlerTool;
+import yunxun.ai.canary.backend.mcp.service.tool.GraphTool;
+import yunxun.ai.canary.backend.mcp.service.tool.LlmTool;
+import yunxun.ai.canary.backend.mcp.service.tool.RagTool;
+import yunxun.ai.canary.backend.setting.service.UserToolService;
 
 import java.util.ArrayList;
 import java.util.List;

@@ -6,7 +6,12 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
-@MapperScan("yunxun.ai.canary.backend.repository.mysql")
+@MapperScan({
+        "yunxun.ai.canary.backend.user.repository.mysql",
+        "yunxun.ai.canary.backend.chat.repository.mysql",
+        "yunxun.ai.canary.backend.session.repository",
+        "yunxun.ai.canary.backend.setting.repository.mysql"
+})
 public class MybatisPlusConfig {
 
     @Bean
