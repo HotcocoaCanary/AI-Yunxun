@@ -4,6 +4,8 @@ server:
 spring:
   application:
     name: AI-Yunxun
+  main:
+    allow-circular-references: true
 
   # ==========================
   # MySQL Database
@@ -72,24 +74,6 @@ spring:
           model: qwen3:8b
       embedding:
         model: qwen3:8b
-
-app:
-  rag:
-    chroma:
-      base-url: http://localhost:8000
-      collection: ai-yunxun
-  agent:
-    default-tools:
-      - crawler
-      - analysis
-      - rag
-  security:
-    jwt:
-      secret: change-me
-      access-token-ttl-seconds: 3600
-      refresh-token-ttl-seconds: 604800
-  auth:
-    enabled: true
 
 # ==========================
 # Logging

@@ -6,21 +6,21 @@ import org.springframework.ai.chat.prompt.ChatOptions;
 import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 public class LlmService {
-
-    private static final String SYSTEM_PROMPT = "You are Yunxun assistant. Provide concise and safe answers.";
 
     private final ChatClient chatClient;
     private final LlmPromptTemplates templates;
 
-    public LlmService(ChatClient chatClient, LlmPromptTemplates templates) {
-        this.chatClient = chatClient;
+    public LlmService(ChatClient.Builder chatClientBuilder, LlmPromptTemplates templates) {
+        this.chatClient = chatClientBuilder.build();
         this.templates = templates;
     }
 
     public String chat(String userInput) {
-        Prompt prompt = templates.buildChatPrompt(SYSTEM_PROMPT, java.util.List.of(), userInput);
+        Prompt prompt = templates.buildChatPrompt(List.of(), userInput);
         return callModel(prompt, null);
     }
 
