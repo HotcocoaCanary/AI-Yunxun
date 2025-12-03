@@ -69,6 +69,13 @@
             <groupId>org.springframework.ai</groupId>
             <artifactId>spring-ai-starter-model-ollama</artifactId>
         </dependency>
+        <!-- https://mvnrepository.com/artifact/ai.z.openapi/zai-sdk -->
+        <dependency>
+            <groupId>ai.z.openapi</groupId>
+            <artifactId>zai-sdk</artifactId>
+            <version>0.1.1</version>
+        </dependency>
+
         <!-- MCP -->
         <dependency>
             <groupId>org.springframework.ai</groupId>

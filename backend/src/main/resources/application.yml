@@ -75,6 +75,12 @@ spring:
       embedding:
         model: qwen3:8b
 
+zhipu:
+  # GLM 大模型 API Key，推荐通过环境变量 ZHIPU_API_KEY 注入
+  api-key: da2a344e9ab04b5da76e7e352893b412.AjEnXNNc2YG0aBHm
+  # 默认使用的免费模型
+  model: glm-4.5-flash
+
 # ==========================
 # Logging
 # ==========================
