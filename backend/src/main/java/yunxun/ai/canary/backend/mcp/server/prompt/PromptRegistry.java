@@ -1,4 +1,4 @@
-package yunxun.ai.canary.backend.mcp.service.prompt;
+package yunxun.ai.canary.backend.mcp.server.prompt;
 
 import jakarta.annotation.PostConstruct;
 import lombok.Getter;
@@ -83,4 +83,3 @@ public class PromptRegistry {
         return prompt != null ? prompt.getOrDefault("content", "") : "";
     }
 }
-

@@ -1,4 +1,4 @@
-package yunxun.ai.canary.backend.graph.service;
+package yunxun.ai.canary.backend.db.neo4j;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -13,6 +13,9 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Read-only Neo4j query service used by MCP tools and (optionally) other services.
+ */
 @Service
 public class Neo4jQueryService {
 
@@ -24,10 +27,6 @@ public class Neo4jQueryService {
         this.objectMapper = objectMapper;
     }
 
-    /**
-     * 执行只读 Cypher 查询并以 JSON 字符串形式返回结果。
-     * 这是供业务服务和 MCP 工具复用的统一入口。
-     */
     public String runQueryAsJson(String cypher) {
         List<Map<String, Object>> rawRows = neo4jClient.query(cypher).fetch().all().stream().toList();
         List<Map<String, Object>> rows = new ArrayList<>();
@@ -37,7 +36,7 @@ public class Neo4jQueryService {
         try {
             return objectMapper.writeValueAsString(rows);
         } catch (JsonProcessingException e) {
-            throw new RuntimeException("序列化 Neo4j 查询结果为 JSON 时出错", e);
+            throw new RuntimeException("Failed to serialize Neo4j result to JSON", e);
         }
     }
 
@@ -92,3 +91,4 @@ public class Neo4jQueryService {
         return value;
     }
 }
+
