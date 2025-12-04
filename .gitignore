@@ -32,3 +32,6 @@ build/
 ### VS Code ###
 .vscode/
 /logs/
+/frontend/package-lock.json
+/frontend/.next/
+/frontend/node_modules/
