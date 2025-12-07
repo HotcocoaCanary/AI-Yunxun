@@ -6,7 +6,7 @@
  */
 export function ChartPanel() {
   return (
-    <section className="flex h-full items-center justify-center bg-[#FEF3C7] m-0 p-2">
+    <section className="flex w-full h-full items-center justify-center bg-[#FEF3C7]">
       <div className="text-xs text-neutral-800">图表组件 ChartPanel</div>
     </section>
   );

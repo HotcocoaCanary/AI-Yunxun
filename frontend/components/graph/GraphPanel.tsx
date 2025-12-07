@@ -6,7 +6,7 @@
  */
 export function GraphPanel() {
   return (
-    <section className="flex h-full items-center justify-center bg-[#EDE9FE] m-0 p-2">
+    <section className="flex w-full h-full items-center justify-center bg-[#EDE9FE]">
       <div className="text-xs text-neutral-800">图谱组件 GraphPanel</div>
     </section>
   );
