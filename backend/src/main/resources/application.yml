@@ -52,6 +52,11 @@ spring:
       password: ai_yunxun
 
   ai:
+    ollama:
+      base-url: http://localhost:11434
+      chat:
+        options:
+          model: qwen3:8b
     mcp:
       server:
         enabled: true
