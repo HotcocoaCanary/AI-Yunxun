@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 /**
  * Placeholder for the main chat + MCP interaction area.
@@ -9,20 +9,10 @@
  */
 export function ChatPanel() {
   return (
-    <section className="flex h-full flex-col rounded-2xl border border-zinc-200 bg-white/90 p-4 shadow-sm">
-      <header className="mb-3 flex items-center justify-between">
-        <div>
-          <h2 className="text-sm font-semibold text-zinc-900">对话区域</h2>
-          <p className="mt-1 text-xs text-zinc-500">
-            这里以后会展示 LLM 对话、MCP 工具调用计划，以及返回的图表和图谱。
-          </p>
-        </div>
-      </header>
-
-      <div className="flex flex-1 flex-col items-center justify-center text-xs text-zinc-400">
-        <p>聊天 UI 尚未接入，现在只是前端架构占位。</p>
-      </div>
+    <section className="flex h-full items-center justify-center bg-[#E0F2FE] m-0 p-2">
+      <div className="text-xs text-neutral-700">聊天组件 ChatPanel</div>
     </section>
   );
 }
+
 
