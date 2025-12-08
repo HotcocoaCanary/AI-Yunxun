@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { ChartPanel } from "@/components/chart/ChartPanel";
+import type { GraphData } from "@/components/graph/GraphPanel";
 
 type ChatMessage = {
   id: string;
@@ -11,11 +12,15 @@ type ChatMessage = {
 
 const BACKEND_ERROR_MESSAGE = "后端暂时不可用，请稍后重试。";
 
+type ChatPanelProps = {
+  onGraphChange?: (graph: GraphData | null) => void;
+};
+
 /**
  * Main chat + MCP interaction area.
  * 当前作为 MCP 客户端入口，调用 Next API /api/chat，再由后端接入 Ollama + MCP。
  */
-export function ChatPanel() {
+export function ChatPanel({ onGraphChange }: ChatPanelProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
@@ -44,8 +49,24 @@ export function ChatPanel() {
         throw new Error("Chat API error");
       }
 
-      const data = (await res.json()) as { reply?: string };
+      const data = (await res.json()) as {
+        reply?: string;
+        graphJson?: string | null;
+      };
       const replyText = data.reply ?? BACKEND_ERROR_MESSAGE;
+
+      if (onGraphChange) {
+        if (data.graphJson) {
+          try {
+            const parsed = JSON.parse(data.graphJson) as GraphData;
+            onGraphChange(parsed);
+          } catch {
+            onGraphChange(null);
+          }
+        } else {
+          onGraphChange(null);
+        }
+      }
 
       const assistantMsg: ChatMessage = {
         id: crypto.randomUUID(),

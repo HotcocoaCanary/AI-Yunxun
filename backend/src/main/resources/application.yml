@@ -68,6 +68,17 @@ spring:
           tool: true
           resource: true
           prompt: true
+      client:
+        enabled: true
+        toolcallback:
+          enabled: true
+        servers:
+          local-mcp:
+            transport: sse
+            sse:
+              base-url: "http://localhost:${server.port}"
+              sse-endpoint: /sse
+              sse-message-endpoint: /mcp/message
 # ==========================
 # Logging
 # ==========================
