@@ -33,6 +33,7 @@ public class McpChatController {
         ChatResponse response = new ChatResponse();
         response.setReply(result.replyText());
         response.setGraphJson(result.graphJson());
+        response.setChartJson(result.chartJson());
         return response;
     }
 
@@ -58,6 +59,11 @@ public class McpChatController {
          * following the convention in {@link McpChatService.ChatResult#graphJson()}.
          */
         private String graphJson;
+        /**
+         * Optional chart JSON string produced by the model / chart MCP tool,
+         * typically a serialized ChartResponse object understood by the frontend.
+         */
+        private String chartJson;
 
         public String getReply() {
             return reply;
@@ -73,6 +79,14 @@ public class McpChatController {
 
         public void setGraphJson(String graphJson) {
             this.graphJson = graphJson;
+        }
+
+        public String getChartJson() {
+            return chartJson;
+        }
+
+        public void setChartJson(String chartJson) {
+            this.chartJson = chartJson;
         }
     }
 }

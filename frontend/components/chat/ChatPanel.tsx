@@ -1,7 +1,7 @@
 ﻿"use client";
 
 import { useState } from "react";
-import { ChartPanel } from "@/components/chart/ChartPanel";
+import { ChartPanel, type ChartResponse } from "@/components/chart/ChartPanel";
 import type { GraphData } from "@/components/graph/GraphPanel";
 
 type ChatMessage = {
@@ -24,6 +24,7 @@ export function ChatPanel({ onGraphChange }: ChatPanelProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
+  const [chart, setChart] = useState<ChartResponse | null>(null);
 
   async function handleSend() {
     const trimmed = input.trim();
@@ -52,20 +53,32 @@ export function ChatPanel({ onGraphChange }: ChatPanelProps) {
       const data = (await res.json()) as {
         reply?: string;
         graphJson?: string | null;
+        chartJson?: string | null;
       };
       const replyText = data.reply ?? BACKEND_ERROR_MESSAGE;
 
       if (onGraphChange) {
         if (data.graphJson) {
           try {
-            const parsed = JSON.parse(data.graphJson) as GraphData;
-            onGraphChange(parsed);
+            const parsedGraph = JSON.parse(data.graphJson) as GraphData;
+            onGraphChange(parsedGraph);
           } catch {
             onGraphChange(null);
           }
         } else {
           onGraphChange(null);
         }
+      }
+
+      if (data.chartJson) {
+        try {
+          const parsedChart = JSON.parse(data.chartJson) as ChartResponse;
+          setChart(parsedChart);
+        } catch {
+          setChart(null);
+        }
+      } else {
+        setChart(null);
       }
 
       const assistantMsg: ChatMessage = {
@@ -99,7 +112,9 @@ export function ChatPanel({ onGraphChange }: ChatPanelProps) {
 
       <div className="flex flex-1 gap-2 p-2">
         <div className="flex flex-1 flex-col rounded bg-white/60 p-2 text-xs text-neutral-800">
-          <div className="mb-1 text-[11px] font-medium text-neutral-600">对话记录</div>
+          <div className="mb-1 text-[11px] font-medium text-neutral-600">
+            对话记录
+          </div>
           <div className="flex-1 space-y-1 overflow-auto">
             {messages.map((msg) => (
               <div key={msg.id} className="whitespace-pre-wrap">
@@ -118,9 +133,11 @@ export function ChatPanel({ onGraphChange }: ChatPanelProps) {
         </div>
 
         <div className="w-64 rounded bg-white/60 p-2 text-xs text-neutral-800">
-          <div className="mb-1 text-[11px] font-medium text-neutral-600">图表占位（未来嵌入 MCP 图表）</div>
+          <div className="mb-1 text-[11px] font-medium text-neutral-600">
+            图表区域（MCP 图表）
+          </div>
           <div className="h-40">
-            <ChartPanel />
+            <ChartPanel chart={chart} />
           </div>
         </div>
       </div>
