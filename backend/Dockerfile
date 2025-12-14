@@ -16,8 +16,14 @@ FROM eclipse-temurin:17-jre-alpine
 
 WORKDIR /app
 
-# 安装 curl 用于健康检查
-RUN apk add --no-cache curl
+# 安装 Node.js 和 npm（用于运行 mcp-searxng）
+RUN apk add --no-cache \
+    curl \
+    nodejs \
+    npm
+
+# 全局安装 mcp-searxng（无需 API Key 的网络搜索 MCP 服务器）
+RUN npm install -g mcp-searxng
 
 # 创建非 root 用户
 RUN addgroup -S spring && adduser -S spring -G spring

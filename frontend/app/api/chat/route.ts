@@ -23,7 +23,11 @@ export async function POST(req: Request) {
     );
   }
 
-  const data = (await res.json()) as { reply: string };
+  const data = (await res.json()) as {
+    reply: string;
+    graphJson?: string | null;
+    chartJson?: string | null;
+  };
 
   return Response.json(data);
 }

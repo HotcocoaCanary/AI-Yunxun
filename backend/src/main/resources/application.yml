@@ -73,12 +73,22 @@ spring:
         toolcallback:
           enabled: true
         servers:
+          # 本地 MCP 服务器（提供 Neo4j、MongoDB、图表生成工具）
           local-mcp:
             transport: sse
             sse:
               base-url: "http://localhost:${server.port}"
               sse-endpoint: /sse
               sse-message-endpoint: /mcp/message
+          # 网络搜索 MCP 服务器 - mcp-searxng（无需 API Key）
+          # 安装：npm install -g mcp-searxng
+          # 使用公共 SearXNG 实例，无需配置
+          websearch-mcp:
+            transport: stdio
+            command: mcp-searxng
+            # 如果需要使用自定义 SearXNG 实例，可以添加环境变量：
+            # env:
+            #   SEARXNG_URL: "https://your-searxng-instance.com"
 # ==========================
 # Logging
 # ==========================

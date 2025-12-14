@@ -72,6 +72,41 @@ public class PromptRegistry {
                         - 如有必要，可以简要说明关系结构（例如谁认识谁、谁购买了什么）
                         """
         ));
+
+        // 网络搜索数据收集提示词
+        prompts.put("web-search-data-collection", Map.of(
+                "id", "web-search-data-collection",
+                "name", "网络搜索数据收集提示词",
+                "content", """
+                        你需要从网络搜索中收集数据，用于生成图表。
+                        
+                        搜索策略：
+                        1. 根据用户问题确定需要搜索的关键词和数据范围
+                        2. 搜索相关的统计数据、报告、官方数据等
+                        3. 提取关键数据点（时间、数值、分类等）
+                        
+                        数据格式要求：
+                        将搜索到的数据整理为 JSON 数组格式，每个元素包含：
+                        - 时间序列数据：{"year": "2015", "count": 150} 或 {"date": "2020-01", "value": 100}
+                        - 分类数据：{"category": "类别名", "value": 数值} 或 {"name": "名称", "count": 数量}
+                        
+                        字段命名建议：
+                        - X 轴（类别/时间）：year, date, time, name, category, label
+                        - Y 轴（数值）：count, value, amount, quantity, number
+                        
+                        示例输出格式：
+                        [
+                          {"year": "2015", "count": 150},
+                          {"year": "2016", "count": 170},
+                          {"year": "2017", "count": 190}
+                        ]
+                        
+                        注意事项：
+                        - 确保数据准确可靠，优先使用官方或权威来源
+                        - 数据点数量建议在 5-50 之间，过多会影响图表可读性
+                        - 如果无法获取准确数据，如实说明，不要编造数据
+                        """
+        ));
     }
 
     public Map<String, String> getPrompt(String id) {

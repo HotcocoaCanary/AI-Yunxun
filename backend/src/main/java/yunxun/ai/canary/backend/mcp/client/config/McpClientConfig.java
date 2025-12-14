@@ -5,15 +5,19 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 /**
- * Basic configuration for the Spring AI {@link ChatClient}.
+ * Spring AI ChatClient 的基础配置
  * <p>
- * The {@link ChatClient.Builder} is auto-configured by Spring AI (Ollama starter),
- * and here we simply expose a concrete {@link ChatClient} bean so that
- * application services can inject and use it.
+ * ChatClient.Builder 由 Spring AI（Ollama starter）自动配置，
+ * 这里我们简单地暴露一个具体的 ChatClient Bean，
+ * 以便应用服务可以注入并使用它。
  */
 @Configuration
 public class McpClientConfig {
 
+    /**
+     * 创建 ChatClient Bean
+     * 用于与 AI 模型进行对话交互
+     */
     @Bean
     public ChatClient chatClient(ChatClient.Builder builder) {
         return builder.build();

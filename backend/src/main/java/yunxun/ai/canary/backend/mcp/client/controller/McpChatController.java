@@ -11,10 +11,10 @@ import org.springframework.web.bind.annotation.RestController;
 import yunxun.ai.canary.backend.mcp.client.service.McpChatService;
 
 /**
- * REST controller that exposes a simple chat endpoint for the frontend.
+ * REST 控制器，为前端提供简单的聊天接口
  * <p>
- * This matches the frontend expectation:
- *   POST /api/chat  { "message": "..." }  ->  { "reply": "..." }
+ * 匹配前端期望的接口格式：
+ *   POST /api/chat  { "message": "..." }  ->  { "reply": "...", "graphJson": "...", "chartJson": "..." }
  */
 @RestController
 @Validated
@@ -27,6 +27,10 @@ public class McpChatController {
         this.chatService = chatService;
     }
 
+    /**
+     * 处理聊天请求
+     * 接收用户消息，返回自然语言回答、图谱数据和图表数据
+     */
     @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
     public ChatResponse chat(@Valid @RequestBody ChatRequest request) {
         McpChatService.ChatResult result = chatService.chat(request.getMessage());
@@ -37,6 +41,9 @@ public class McpChatController {
         return response;
     }
 
+    /**
+     * 聊天请求体
+     */
     public static class ChatRequest {
 
         @NotBlank
@@ -51,17 +58,24 @@ public class McpChatController {
         }
     }
 
+    /**
+     * 聊天响应体
+     */
     public static class ChatResponse {
 
+        /** 自然语言回答 */
         private String reply;
+        
         /**
-         * Optional graph data JSON string produced by the model,
-         * following the convention in {@link McpChatService.ChatResult#graphJson()}.
+         * 可选的图谱数据 JSON 字符串，由模型生成
+         * 遵循 {@link McpChatService.ChatResult#graphJson()} 的约定
+         * 格式：{"nodes":[...], "edges":[...]}
          */
         private String graphJson;
+        
         /**
-         * Optional chart JSON string produced by the model / chart MCP tool,
-         * typically a serialized ChartResponse object understood by the frontend.
+         * 可选的图表数据 JSON 字符串，由模型或图表 MCP 工具生成
+         * 通常是前端可理解的序列化 ChartResponse 对象
          */
         private String chartJson;
 

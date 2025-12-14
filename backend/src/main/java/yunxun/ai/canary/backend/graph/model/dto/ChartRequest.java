@@ -9,11 +9,11 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Request payload for generating charts via the graph/analytics service.
+ * 通过图谱/分析服务生成图表的请求载荷
  * <p>
- * This object is designed to be MCP/LLM friendly:
- * - Most fields are optional hints so that agents can start with only a question
- *   and gradually add structure when needed.
+ * 此对象设计为对 MCP/LLM 友好：
+ * - 大多数字段为可选提示，代理可以从一个问题开始，
+ *   然后在需要时逐步添加结构。
  */
 @Data
 @Builder
@@ -22,59 +22,59 @@ import java.util.Map;
 public class ChartRequest {
 
     /**
-     * User analytic question or intent in natural language.
-     * Example: "最近7天每种告警类型的趋势".
+     * 用户的分析问题或意图，使用自然语言描述
+     * 示例："最近7天每种告警类型的趋势"
      */
     private String question;
 
     /**
-     * Preferred chart type, e.g. "bar", "line", "pie", "force" or "auto".
+     * 首选的图表类型，例如："bar"（柱状图）、"line"（折线图）、"pie"（饼图）、"force"（力导向图）或 "auto"（自动选择）
      */
     private String chartType;
 
     /**
-     * Optional logical data source or domain identifier, e.g. "alerts", "traffic".
+     * 可选的数据源或领域标识符，例如："alerts"（告警）、"traffic"（流量）
      */
     private String dataSource;
 
     /**
-     * Optional metric name, e.g. "count", "duration_avg".
+     * 可选的指标名称，例如："count"（计数）、"duration_avg"（平均时长）
      */
     private String metric;
 
     /**
-     * Optional dimension(s) to group by.
-     * For simple cases, a single value is enough.
+     * 可选的分组维度
+     * 对于简单情况，单个值就足够了
      */
     private List<String> dimensions;
 
     /**
-     * Optional time range preset, e.g. "last_7d", "last_30d", "all".
+     * 可选的时间范围预设，例如："last_7d"（最近7天）、"last_30d"（最近30天）、"all"（全部）
      */
     private String timeRangePreset;
 
     /**
-     * Optional ISO-8601 from timestamp, e.g. "2025-11-01T00:00:00Z".
+     * 可选的 ISO-8601 起始时间戳，例如："2025-11-01T00:00:00Z"
      */
     private String from;
 
     /**
-     * Optional ISO-8601 to timestamp, e.g. "2025-11-07T23:59:59Z".
+     * 可选的 ISO-8601 结束时间戳，例如："2025-11-07T23:59:59Z"
      */
     private String to;
 
     /**
-     * Optional simple filters, e.g. { "severity": ["high", "critical"], "tenantId": "xxx" }.
+     * 可选的简单过滤器，例如：{ "severity": ["high", "critical"], "tenantId": "xxx" }
      */
     private Map<String, Object> filters;
 
     /**
-     * Maximum number of data points to return, used as a safety guard.
+     * 返回数据点的最大数量，用作安全防护
      */
     private Integer limit;
 
     /**
-     * Hint to prefer simple chart types (bar/line/pie) when possible.
+     * 提示优先使用简单的图表类型（柱状图/折线图/饼图）
      */
     private Boolean preferSimpleChart;
 }

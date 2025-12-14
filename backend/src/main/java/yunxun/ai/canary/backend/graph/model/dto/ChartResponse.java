@@ -9,11 +9,11 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Unified chart response object returned by the chart MCP tool.
+ * 图表 MCP 工具返回的统一图表响应对象
  * <p>
- * Frontend LLM agents can:
- * - use {@link #chartSpec} directly for rendering (e.g. ECharts option);
- * - inspect {@link #data} and {@link #insightSummary} to write explanations.
+ * 前端 AI 代理可以：
+ * - 直接使用 {@link #chartSpec} 进行渲染（例如 ECharts option）；
+ * - 检查 {@link #data} 和 {@link #insightSummary} 来编写解释说明。
  */
 @Data
 @Builder
@@ -22,44 +22,46 @@ import java.util.Map;
 public class ChartResponse {
 
     /**
-     * Schema version for forward compatibility.
+     * 架构版本，用于向前兼容
      */
     @Builder.Default
     private String schemaVersion = "v1";
 
     /**
-     * Resolved chart type: "bar" | "line" | "pie" | "force" | "table".
+     * 解析后的图表类型："bar"（柱状图）| "line"（折线图）| "pie"（饼图）| "force"（力导向图）| "table"（表格）
      */
     private String chartType;
 
     /**
-     * Rendering engine name, e.g. "echarts" or "vega-lite".
+     * 渲染引擎名称，例如："echarts" 或 "vega-lite"
      */
     private String engine;
 
+    /** 图表标题 */
     private String title;
 
+    /** 图表描述 */
     private String description;
 
     /**
-     * Chart specification object for the chosen engine.
-     * For ECharts this is the full option map.
+     * 所选引擎的图表规格对象
+     * 对于 ECharts，这是完整的 option 映射
      */
     private Map<String, Object> chartSpec;
 
     /**
-     * Optional normalized tabular data for reasoning and/or table rendering.
-     * Each entry is a row: column name -> value.
+     * 可选的标准化表格数据，用于推理和/或表格渲染
+     * 每个条目是一行：列名 -> 值
      */
     private List<Map<String, Object>> data;
 
     /**
-     * Optional short natural language summary for the insight.
+     * 可选的简短自然语言洞察摘要
      */
     private String insightSummary;
 
     /**
-     * Optional bullet-style highlights for quick scanning.
+     * 可选的要点式高亮，便于快速浏览
      */
     private List<String> insightBullets;
 }
