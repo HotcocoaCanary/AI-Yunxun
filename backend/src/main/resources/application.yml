@@ -52,11 +52,16 @@ spring:
       password: ai_yunxun
 
   ai:
-    ollama:
-      base-url: http://localhost:11434
-      chat:
-        options:
-          model: qwen3:8b
+    # Ollama 配置（已替换为智谱AI API）
+    # ollama:
+    #   base-url: http://localhost:11434
+    #   chat:
+    #     options:
+    #       model: qwen3:8b
+    # 智谱AI 配置
+    zhipu:
+      api-key: da2a344e9ab04b5da76e7e352893b412.AjEnXNNc2YG0aBHm
+      model: glm-4.5-flash
     mcp:
       server:
         enabled: true

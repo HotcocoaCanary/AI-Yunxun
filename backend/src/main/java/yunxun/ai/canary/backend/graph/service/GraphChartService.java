@@ -4,9 +4,7 @@ import org.springframework.stereotype.Service;
 import yunxun.ai.canary.backend.graph.model.dto.ChartRequest;
 import yunxun.ai.canary.backend.graph.model.dto.ChartResponse;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * 核心图表生成服务
@@ -48,27 +46,41 @@ public class GraphChartService {
             yValues = List.of(10, 20, 15, 30);
         }
 
-        Map<String, Object> option = Map.of(
-                "title", Map.of("text", title),
-                "tooltip", Map.of("trigger", "axis"),
-                "xAxis", Map.of("type", "category", "data", xValues),
-                "yAxis", Map.of("type", "value"),
-                "series", List.of(
-                        Map.of(
-                                "type", resolvedChartType.equals("line") ? "line" : "bar",
-                                "data", yValues
-                        )
-                )
-        );
+        // 使用 LinkedHashMap 和 ArrayList 避免类型推断问题
+        Map<String, Object> titleMap = new LinkedHashMap<>();
+        titleMap.put("text", title);
+        
+        Map<String, Object> tooltipMap = new LinkedHashMap<>();
+        tooltipMap.put("trigger", "axis");
+        
+        Map<String, Object> xAxisMap = new LinkedHashMap<>();
+        xAxisMap.put("type", "category");
+        xAxisMap.put("data", xValues);
+        
+        Map<String, Object> yAxisMap = new LinkedHashMap<>();
+        yAxisMap.put("type", "value");
+        
+        Map<String, Object> seriesItem = new LinkedHashMap<>();
+        seriesItem.put("type", resolvedChartType.equals("line") ? "line" : "bar");
+        seriesItem.put("data", new ArrayList<>(yValues)); // 转换为 ArrayList<Number>
+        
+        List<Map<String, Object>> seriesList = new ArrayList<>();
+        seriesList.add(seriesItem);
+        
+        Map<String, Object> option = new LinkedHashMap<>();
+        option.put("title", titleMap);
+        option.put("tooltip", tooltipMap);
+        option.put("xAxis", xAxisMap);
+        option.put("yAxis", yAxisMap);
+        option.put("series", seriesList);
 
-        List<Map<String, Object>> dataRows = Collections.unmodifiableList(
-                xValues.stream()
-                        .map(x -> Map.<String, Object>of(
-                                "x", x,
-                                "value", yValues.get(xValues.indexOf(x))
-                        ))
-                        .toList()
-        );
+        List<Map<String, Object>> dataRows = new ArrayList<>();
+        for (int i = 0; i < xValues.size(); i++) {
+            Map<String, Object> row = new LinkedHashMap<>();
+            row.put("x", xValues.get(i));
+            row.put("value", yValues.get(i));
+            dataRows.add(row);
+        }
 
         return ChartResponse.builder()
                 .chartType(resolvedChartType)

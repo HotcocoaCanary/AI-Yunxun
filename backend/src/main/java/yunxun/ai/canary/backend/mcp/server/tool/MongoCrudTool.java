@@ -10,19 +10,18 @@ import yunxun.ai.canary.backend.db.mongo.RawPaperDocumentRepository;
 
 import java.time.Instant;
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
- * MongoDB 操作工具集
+ * MongoDB CRUD 操作工具集
  * 提供文档的增删改查（CRUD）操作，用于存储和管理论文原始文档数据
  */
 @Component
-public class MongoTool {
+public class MongoCrudTool {
 
     private final RawPaperDocumentRepository rawPaperRepository;
     private final ObjectMapper objectMapper;
 
-    public MongoTool(RawPaperDocumentRepository rawPaperRepository, ObjectMapper objectMapper) {
+    public MongoCrudTool(RawPaperDocumentRepository rawPaperRepository, ObjectMapper objectMapper) {
         this.rawPaperRepository = rawPaperRepository;
         this.objectMapper = objectMapper;
     }
@@ -157,3 +156,4 @@ public class MongoTool {
         }
     }
 }
+
