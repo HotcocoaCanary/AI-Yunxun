@@ -1,4 +1,4 @@
-package yunxun.ai.canary.backend;
+package yunxun.ai.canary.project;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;

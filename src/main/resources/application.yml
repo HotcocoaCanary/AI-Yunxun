@@ -63,37 +63,32 @@ spring:
       api-key: da2a344e9ab04b5da76e7e352893b412.AjEnXNNc2YG0aBHm
       model: glm-4.5-flash
     mcp:
+      # ==========================
+      # MCP 服务器配置（本地工具）
+      # ==========================
       server:
         enabled: true
         name: mcp-server
         version: 1.0.0
+        # SSE 端点配置（用于 WebFlux 响应式传输）
         sse-endpoint: /sse
         sse-message-endpoint: /mcp/message
         capabilities:
-          tool: true
-          resource: true
-          prompt: true
+          tool: true      # 启用工具能力
+          resource: true  # 启用资源能力
+          prompt: true    # 启用提示词能力
+      # ==========================
+      # MCP 客户端配置（连接外部服务器）
+      # ==========================
       client:
         enabled: true
         toolcallback:
           enabled: true
-        servers:
-          # 本地 MCP 服务器（提供 Neo4j、MongoDB、图表生成工具）
-          local-mcp:
-            transport: sse
-            sse:
-              base-url: "http://localhost:${server.port}"
+        sse:
+          connections:
+            local-mcp:
+              url: http://localhost:${server.port}/sse
               sse-endpoint: /sse
-              sse-message-endpoint: /mcp/message
-          # 网络搜索 MCP 服务器 - mcp-searxng（无需 API Key）
-          # 安装：npm install -g mcp-searxng
-          # 使用公共 SearXNG 实例，无需配置
-          websearch-mcp:
-            transport: stdio
-            command: mcp-searxng
-            # 如果需要使用自定义 SearXNG 实例，可以添加环境变量：
-            # env:
-            #   SEARXNG_URL: "https://your-searxng-instance.com"
 # ==========================
 # Logging
 # ==========================
