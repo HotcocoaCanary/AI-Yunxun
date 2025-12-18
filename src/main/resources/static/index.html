@@ -1,10 +1,59 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
-    <meta charset="UTF-8">
-    <title>Title</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI-Yunxun</title>
+  <link rel="stylesheet" href="/assets/app.css" />
+  <!-- 你提供的第三方包建议放到 static/vendor/，例如：/vendor/echarts.min.js -->
+  <script src="/vendor/echarts.min.js" defer></script>
+  <script src="/assets/app.js" defer></script>
 </head>
 <body>
+  <header class="app-header">
+    <div class="brand">
+      <div class="brand-title">AI-Yunxun</div>
+      <div class="brand-sub">Web UI · Chat · MCP Tools</div>
+    </div>
+    <div class="status">
+      <span class="badge" id="status-badge">Idle</span>
+      <label class="toggle">
+        <input type="checkbox" id="stream-toggle" checked />
+        <span>流式输出</span>
+      </label>
+    </div>
+  </header>
 
+  <main class="layout">
+    <section class="panel chat">
+      <div class="panel-title">对话</div>
+      <div class="chat-list" id="chat-list"></div>
+      <div class="composer">
+        <textarea id="chat-input" rows="2" placeholder="输入问题…（回车发送，Shift+Enter 换行）"></textarea>
+        <button id="send-btn">发送</button>
+      </div>
+    </section>
+
+    <aside class="panel side">
+      <div class="panel-title">信息</div>
+
+      <div class="section">
+        <div class="section-title">Sources</div>
+        <ul class="sources" id="sources"></ul>
+      </div>
+
+      <div class="section">
+        <div class="section-title">Chart</div>
+        <div class="chart" id="chart"></div>
+        <div class="hint" id="chart-hint">如需图表，请确保已放置 `/vendor/echarts.min.js`。</div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">Debug</div>
+        <pre class="debug" id="debug"></pre>
+      </div>
+    </aside>
+  </main>
 </body>
 </html>
+

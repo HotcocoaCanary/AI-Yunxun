@@ -32,6 +32,8 @@ build/
 ### VS Code ###
 .vscode/
 /logs/
+/src/main/resources/application-local.yml
+/src/main/resources/application-*.local.yml
 /frontend/package-lock.json
 /frontend/.next/
 /frontend/node_modules/

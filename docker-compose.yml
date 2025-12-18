@@ -1,5 +1,3 @@
-version: "3.9"
-
 services:
   # Ollama 服务（大模型推理）
   ollama:
@@ -44,7 +42,7 @@ services:
 
   # MongoDB 服务
   mongodb:
-    image: mongo:8
+    image: mongo:7
     container_name: mongo-ai-yunxun
     restart: always
     ports:
@@ -58,7 +56,7 @@ services:
 
   # Redis 服务
   redis:
-    image: redis:8
+    image: redis:7
     container_name: redis-ai-yunxun
     restart: always
     command: redis-server --requirepass ai_yunxun
