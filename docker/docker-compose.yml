@@ -1,0 +1,47 @@
+services:
+  # Ollama 服务（大模型推理）
+  ollama:
+    container_name: ollama-ai-yunxun
+    image: ollama/ollama:latest
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama:/root/.ollama/models
+    restart: always
+    entrypoint: >
+      /bin/bash -c "
+      ollama serve &
+      sleep 5 &&
+      ollama pull qwen3:8b &&
+      tail -f /dev/null
+      "
+
+  # Neo4j 服务
+  neo4j:
+    image: neo4j:community
+    container_name: neo4j-ai-yunxun
+    restart: always
+    environment:
+      NEO4J_AUTH: neo4j/ai_yunxun
+      NEO4J_dbms_memory_heap_initial__size: 512m
+      NEO4J_dbms_memory_heap_max__size: 1g
+    ports:
+      - "7474:7474"  # 浏览器界面
+      - "7687:7687"  # 程序连接端口
+    volumes:
+      - neo4j_data:/data
+      - neo4j_logs:/logs
+      - neo4j_import:/var/lib/neo4j/import
+      - neo4j_plugins:/plugins
+    healthcheck:
+      test: ["CMD", "cypher-shell", "-u", "neo4j", "-p", "ai_yunxun", "RETURN 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  neo4j_data:
+  neo4j_logs:
+  neo4j_import:
+  neo4j_plugins:
+  ollama:
