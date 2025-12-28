@@ -1,13 +1,14 @@
-package ai.canary.mcp;
+package ai.canary.mcp.neo4j;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
-public class McpApplication {
+public class Neo4jMcpServerApplication {
 
     public static void main(String[] args) {
-        SpringApplication.run(McpApplication.class, args);
+        SpringApplication.run(Neo4jMcpServerApplication.class, args);
     }
 
 }
+
