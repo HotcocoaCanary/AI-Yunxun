@@ -353,14 +353,11 @@ public class EChartOptionBuilder {
         option.set("tooltip", tooltip);
         
         // 提取所有唯一的维度名称
-        Set<String> dimensions = data.stream()
+
+        List<String> dimensionList = data.stream()
                 .map(DataItem::getName)
-                .filter(Objects::nonNull)
-                .collect(Collectors.toCollection(LinkedHashSet::new));
-        
-        List<String> dimensionList = new ArrayList<>(dimensions);
-        Collections.sort(dimensionList);
-        
+                .filter(Objects::nonNull).distinct().sorted().toList();
+
         // 计算最大值（向上取整到10的倍数）
         double maxValue = data.stream()
                 .filter(item -> item.getValue() != null)
@@ -1157,12 +1154,8 @@ public class EChartOptionBuilder {
         ObjectNode label = objectMapper.createObjectNode();
         label.put("fontSize", 12);
         series.set("label", label);
-        
-        if (nodeAlign != null) {
-            series.put("nodeAlign", nodeAlign);
-        } else {
-            series.put("nodeAlign", "justify");
-        }
+
+        series.put("nodeAlign", Objects.requireNonNullElse(nodeAlign, "justify"));
         
         seriesArray.add(series);
         option.set("series", seriesArray);
