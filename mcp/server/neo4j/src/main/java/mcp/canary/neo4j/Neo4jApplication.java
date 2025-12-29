@@ -10,7 +10,6 @@ import org.springframework.boot.autoconfigure.neo4j.Neo4jAutoConfiguration;
  * 禁用 Spring Boot 的 Neo4j 自动配置，使用自定义的 Neo4jConnection
  *
  * @author dsimile
- * @date 2025-5-7
  */
 @SpringBootApplication(exclude = {
         Neo4jAutoConfiguration.class,

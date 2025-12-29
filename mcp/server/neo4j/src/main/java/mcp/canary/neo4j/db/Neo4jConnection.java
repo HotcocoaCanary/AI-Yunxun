@@ -13,9 +13,6 @@ import java.util.concurrent.TimeUnit;
 /**
  * Neo4j 数据库连接管理类
  * 负责创建和管理 Neo4j 驱动程序的连接
- *
- * @author dsimile
- * @date 2025-5-7
  */
 @Getter
 @Component

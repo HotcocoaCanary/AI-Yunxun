@@ -1,21 +1,15 @@
 server:
-  port: 8082
+  port: 8081
 
 spring:
   application:
-    name: mcp-neo4j
+    name: mcp-echart
   ai:
     mcp:
       server:
         protocol: SSE
-        name: my
+        name: my-mcp-server
         version: 1.0.0
         type: sync
         annotation-scanner:
           enabled: true
-
-neo4j:
-  uri: neo4j://localhost:7687
-  username: neo4j
-  password: ai_yunxun
-  database: neo4j
