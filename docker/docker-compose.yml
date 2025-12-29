@@ -1,3 +1,4 @@
+name: AI-Yunxun
 services:
   # Ollama 服务（大模型推理）
   ollama:
@@ -25,6 +26,10 @@ services:
       NEO4J_AUTH: neo4j/ai_yunxun
       NEO4J_dbms_memory_heap_initial__size: 512m
       NEO4J_dbms_memory_heap_max__size: 1g
+      NEO4J_PLUGINS: '["apoc"]'
+      NEO4J_apoc_export_file_enabled: "true"
+      NEO4J_apoc_import_file_enabled: "true"
+      NEO4J_apoc_import_file_use__neo4j__config: "true"
     ports:
       - "7474:7474"  # 浏览器界面
       - "7687:7687"  # 程序连接端口
