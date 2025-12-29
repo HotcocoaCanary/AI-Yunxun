@@ -19,3 +19,11 @@ spring:
         type: ASYNC  # Recommended for reactive applications
         annotation-scanner:
           enabled: true  # Enable automatic tool discovery via @McpTool annotations
+        # SSE properties
+        sse-message-endpoint: /mcp/messages  # SSE 消息端点
+        keep-alive-interval: 30s  # Keep-alive 间隔
+        capabilities:
+          tool: true
+          resource: true
+          prompt: true
+          completion: true
