@@ -9,6 +9,9 @@ import mcp.canary.echart.service.LineChartService;
 import mcp.canary.echart.service.PieChartService;
 import org.springaicommunity.mcp.annotation.McpTool;
 import org.springaicommunity.mcp.annotation.McpToolParam;
+import io.modelcontextprotocol.server.McpSyncServerExchange;
+import io.modelcontextprotocol.spec.McpSchema.LoggingLevel;
+import io.modelcontextprotocol.spec.McpSchema.LoggingMessageNotification;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -23,14 +26,14 @@ import java.util.Map;
  */
 @Component
 public class EChartMCPTool {
-    
+
     private static final ObjectMapper objectMapper = new ObjectMapper();
-    
+
     private final BarChartService barChartService;
     private final LineChartService lineChartService;
     private final PieChartService pieChartService;
     private final GraphChartService graphChartService;
-    
+
     @Autowired
     public EChartMCPTool(
             BarChartService barChartService,
@@ -42,7 +45,7 @@ public class EChartMCPTool {
         this.pieChartService = pieChartService;
         this.graphChartService = graphChartService;
     }
-    
+
     /**
      * 1. 柱状图
      */
@@ -54,14 +57,27 @@ public class EChartMCPTool {
             @McpToolParam(description = "图表数据") List<DataItem> data,
             @McpToolParam(description = "是否启用分组（多系列时）") Boolean group,
             @McpToolParam(description = "是否启用堆叠（多系列时）") Boolean stack,
-            @McpToolParam(description = "输出类型，当前仅支持 option") String outputType) {
-        
-        ObjectNode option = barChartService.buildChartOption(
-                title, axisXTitle, axisYTitle, data,
-                group != null && group, stack != null && stack);
-        return buildMCPResponse(option);
+            @McpToolParam(description = "输出类型，当前仅支持 option") String outputType,
+            McpSyncServerExchange exchange) {
+
+        sendLog(exchange, LoggingLevel.INFO, "开始生成柱状图: " + (title != null ? title : "未命名图表"));
+
+        try {
+            sendLog(exchange, LoggingLevel.INFO, "正在处理数据，共 " + (data != null ? data.size() : 0) + " 条数据");
+
+            ObjectNode option = barChartService.buildChartOption(
+                    title, axisXTitle, axisYTitle, data,
+                    group != null && group, stack != null && stack);
+
+            sendLog(exchange, LoggingLevel.INFO, "柱状图生成完成");
+
+            return buildMCPResponse(option);
+        } catch (Exception e) {
+            sendLog(exchange, LoggingLevel.ERROR, "生成柱状图失败: " + e.getMessage());
+            throw e;
+        }
     }
-    
+
     /**
      * 2. 折线图
      */
@@ -75,17 +91,30 @@ public class EChartMCPTool {
             @McpToolParam(description = "是否填充区域") Boolean showArea,
             @McpToolParam(description = "是否显示数据点标记") Boolean showSymbol,
             @McpToolParam(description = "是否堆叠（多系列时）") Boolean stack,
-            @McpToolParam(description = "输出类型，当前仅支持 option") String outputType) {
-        
-        ObjectNode option = lineChartService.buildChartOption(
-                title, axisXTitle, axisYTitle, data,
-                smooth != null && smooth,
-                showArea != null && showArea,
-                showSymbol == null || showSymbol,
-                stack != null && stack);
-        return buildMCPResponse(option);
+            @McpToolParam(description = "输出类型，当前仅支持 option") String outputType,
+            McpSyncServerExchange exchange) {
+
+        sendLog(exchange, LoggingLevel.INFO, "开始生成折线图: " + (title != null ? title : "未命名图表"));
+
+        try {
+            sendLog(exchange, LoggingLevel.INFO, "正在处理折线图数据，共 " + (data != null ? data.size() : 0) + " 条数据");
+
+            ObjectNode option = lineChartService.buildChartOption(
+                    title, axisXTitle, axisYTitle, data,
+                    smooth != null && smooth,
+                    showArea != null && showArea,
+                    showSymbol == null || showSymbol,
+                    stack != null && stack);
+
+            sendLog(exchange, LoggingLevel.INFO, "折线图生成完成");
+
+            return buildMCPResponse(option);
+        } catch (Exception e) {
+            sendLog(exchange, LoggingLevel.ERROR, "生成折线图失败: " + e.getMessage());
+            throw e;
+        }
     }
-    
+
     /**
      * 3. 饼图
      */
@@ -94,13 +123,26 @@ public class EChartMCPTool {
             @McpToolParam(description = "图表标题") String title,
             @McpToolParam(description = "图表数据") List<DataItem> data,
             @McpToolParam(description = "内半径（0-1），0为饼图，>0为环形图") Double innerRadius,
-            @McpToolParam(description = "输出类型，当前仅支持 option") String outputType) {
-        
-        ObjectNode option = pieChartService.buildChartOption(
-                title, data, innerRadius != null ? innerRadius : 0.0);
-        return buildMCPResponse(option);
+            @McpToolParam(description = "输出类型，当前仅支持 option") String outputType,
+            McpSyncServerExchange exchange) {
+
+        sendLog(exchange, LoggingLevel.INFO, "开始生成饼图: " + (title != null ? title : "未命名图表"));
+
+        try {
+            sendLog(exchange, LoggingLevel.INFO, "正在处理饼图数据，共 " + (data != null ? data.size() : 0) + " 条数据");
+
+            ObjectNode option = pieChartService.buildChartOption(
+                    title, data, innerRadius != null ? innerRadius : 0.0);
+
+            sendLog(exchange, LoggingLevel.INFO, "饼图生成完成");
+
+            return buildMCPResponse(option);
+        } catch (Exception e) {
+            sendLog(exchange, LoggingLevel.ERROR, "生成饼图失败: " + e.getMessage());
+            throw e;
+        }
     }
-    
+
     /**
      * 4. 关系图
      */
@@ -109,16 +151,56 @@ public class EChartMCPTool {
             @McpToolParam(description = "图表标题") String title,
             @McpToolParam(description = "图和边数据") GraphData data,
             @McpToolParam(description = "布局算法") String layout,
-            @McpToolParam(description = "输出类型，当前仅支持 option") String outputType) {
-        
-        ObjectNode option = graphChartService.buildChartOption(title, data, layout);
-        return buildMCPResponse(option);
+            @McpToolParam(description = "输出类型，当前仅支持 option") String outputType,
+            McpSyncServerExchange exchange) {
+
+        sendLog(exchange, LoggingLevel.INFO, "开始生成关系图: " + (title != null ? title : "未命名图表"));
+
+        try {
+            int nodeCount = (data != null && data.getNodes() != null) ? data.getNodes().size() : 0;
+            int edgeCount = (data != null && data.getEdges() != null) ? data.getEdges().size() : 0;
+            sendLog(exchange, LoggingLevel.INFO,
+                    String.format("正在处理关系图数据，节点数: %d, 边数: %d", nodeCount, edgeCount));
+
+            ObjectNode option = graphChartService.buildChartOption(title, data, layout);
+
+            sendLog(exchange, LoggingLevel.INFO, "关系图生成完成");
+
+            return buildMCPResponse(option);
+        } catch (Exception e) {
+            sendLog(exchange, LoggingLevel.ERROR, "生成关系图失败: " + e.getMessage());
+            throw e;
+        }
     }
-    
+
+    /**
+     * 发送日志通知的辅助方法
+     *
+     * @param exchange MCP服务器交换对象，用于发送日志通知
+     * @param level    日志级别
+     * @param message  日志消息
+     */
+    private void sendLog(McpSyncServerExchange exchange, LoggingLevel level, String message) {
+        if (exchange != null) {
+            try {
+                exchange.loggingNotification(
+                        LoggingMessageNotification.builder()
+                                .level(level)
+                                .logger("echart-tool")
+                                .data(message)
+                                .build()
+                );
+            } catch (Exception e) {
+                // 如果日志发送失败，不影响主流程，只记录到控制台
+                System.err.println("Failed to send log notification: " + e.getMessage());
+            }
+        }
+    }
+
     /**
      * 构建 MCP 标准响应格式
      * 将 ECharts option 配置转换为 JSON 字符串并包装为 MCP 响应
-     * 
+     *
      * @param option ECharts option 配置
      * @return MCP 标准响应格式
      */
