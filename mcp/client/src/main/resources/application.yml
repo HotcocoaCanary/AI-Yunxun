@@ -1,13 +1,28 @@
 server:
-  port: 8080
-  application:
-    name=client:
+  port: 8090
 
 spring:
+  application:
+    name: mcp-client
+
   ai:
+    zhipuai:
+      # 建议通过环境变量注入，避免把密钥提交到仓库
+      # 如果未设置环境变量，则使用默认值（仅用于开发测试）
+      api-key: da2a344e9ab04b5da76e7e352893b412.AjEnXNNc2YG0aBHm
+      chat:
+        options:
+          model: glm-4.5-flash
+          temperature: 0.7
+
     mcp:
       client:
+        type: ASYNC
+        toolcallback:
+          enabled: true
         sse:
           connections:
-            my-server-conn:
+            echart-server:
               uri: http://localhost:8081
+            neo4j-server:
+              uri: http://localhost:8082
