@@ -1,6 +1,7 @@
 package mcp.canary.echart.model;
 
 import lombok.Data;
+
 import java.util.List;
 
 /**
@@ -13,7 +14,7 @@ public class GraphData {
      * 节点列表
      */
     private List<GraphNode> nodes;
-    
+
     /**
      * 边列表
      */

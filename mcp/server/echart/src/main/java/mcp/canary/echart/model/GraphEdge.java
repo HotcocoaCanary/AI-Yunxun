@@ -12,12 +12,12 @@ public class GraphEdge {
      * 源节点 id
      */
     private String source;
-    
+
     /**
      * 目标节点 id
      */
     private String target;
-    
+
     /**
      * 边的权重（影响粗细）
      */
