@@ -2,6 +2,7 @@ package mcp.canary.client.service;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.NonNull;
 import mcp.canary.client.model.MCPServerConfig;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ClassPathResource;
@@ -44,14 +45,7 @@ public class MCPService {
         if (server == null) {
             throw new IllegalArgumentException("server is null");
         }
-        if (server.name() == null || server.name().isBlank()) {
-            throw new IllegalArgumentException("server.name is required");
-        }
-        if (server.url() == null || server.url().isBlank()) {
-            throw new IllegalArgumentException("server.url is required");
-        }
-        String protocol = (server.protocol() == null || server.protocol().isBlank()) ? "SSE" : server.protocol();
-        MCPServerConfig normalized = new MCPServerConfig(server.id(), server.name(), server.url(), protocol);
+        MCPServerConfig normalized = getMcpServerConfig(server);
 
         List<MCPServerConfig> servers = readServersInternal();
         boolean exists = servers.stream().anyMatch(s -> s.id() != null && s.id().equals(normalized.id()));
@@ -61,6 +55,17 @@ public class MCPService {
         servers.add(normalized);
         writeServersInternal(servers);
         return normalized;
+    }
+
+    private static @NonNull MCPServerConfig getMcpServerConfig(MCPServerConfig server) {
+        if (server.name() == null || server.name().isBlank()) {
+            throw new IllegalArgumentException("server.name is required");
+        }
+        if (server.url() == null || server.url().isBlank()) {
+            throw new IllegalArgumentException("server.url is required");
+        }
+        String protocol = (server.protocol() == null || server.protocol().isBlank()) ? "SSE" : server.protocol();
+        return new MCPServerConfig(server.id(), server.name(), server.url(), protocol);
     }
 
     public synchronized Optional<MCPServerConfig> deleteServer(String id) {
@@ -120,6 +125,8 @@ public class MCPService {
         }
     }
 }
+
+
 
 
 
