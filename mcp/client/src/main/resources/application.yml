@@ -5,6 +5,10 @@ spring:
   application:
     name: mcp-client
 
+  data:
+    mongodb:
+      uri: mongodb://localhost:27017/ai_yunxun
+
   ai:
     zhipuai:
       # 建议通过环境变量注入，避免把密钥提交到仓库
@@ -15,6 +19,13 @@ spring:
           model: glm-4.5-flash
           temperature: 0.7
 
+    chat:
+      memory:
+        repository:
+          mongo:
+            create-indices: true
+            ttl: 0
+
     mcp:
       client:
         type: ASYNC
@@ -23,6 +34,6 @@ spring:
         sse:
           connections:
             echart-server:
-              uri: http://localhost:8081
+              url: http://localhost:8081
             neo4j-server:
-              uri: http://localhost:8082
+              url: http://localhost:8082

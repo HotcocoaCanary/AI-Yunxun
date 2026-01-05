@@ -1,22 +1,5 @@
 name: AI-Yunxun
 services:
-  # Ollama 服务（大模型推理）
-  ollama:
-    container_name: ollama-ai-yunxun
-    image: ollama/ollama:latest
-    ports:
-      - "11434:11434"
-    volumes:
-      - ollama:/root/.ollama/models
-    restart: always
-    entrypoint: >
-      /bin/bash -c "
-      ollama serve &
-      sleep 5 &&
-      ollama pull qwen3:8b &&
-      tail -f /dev/null
-      "
-
   # Neo4j 服务
   neo4j:
     image: neo4j:community

@@ -1,9 +1,8 @@
 package mcp.canary.client.service;
 
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import lombok.NonNull;
-import mcp.canary.client.model.MCPServerConfig;
+import mcp.canary.client.model.McpServerDefinition;
+import mcp.canary.client.model.McpServersConfig;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
@@ -11,18 +10,18 @@ import org.springframework.stereotype.Service;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Optional;
 
 /**
- * MCP 服务器配置管理（读写 JSON）。
+ * MCP servers configuration management (Claude Desktop mcpServers format).
  *
- * <p>约定：</p>
+ * <p>Rules:</p>
  * <ul>
- *   <li>优先读取 {@code mcp.servers.file} 指定的外部文件（默认 ./mcp-servers.json）</li>
- *   <li>若外部文件不存在，则从 classpath 的 {@code mcp-servers.json} 读取默认配置</li>
- *   <li>写入始终写到外部文件，避免打包后无法修改 classpath 资源的问题</li>
+ *   <li>Prefer external file from {@code mcp.servers.file} (default ./mcp-servers.json)</li>
+ *   <li>If external file missing, read classpath {@code mcp-servers.json}</li>
+ *   <li>Writes always go to external file</li>
  * </ul>
  */
 @Service
@@ -37,96 +36,96 @@ public class MCPService {
         this.serversFile = Path.of(serversFile).toAbsolutePath().normalize();
     }
 
-    public synchronized List<MCPServerConfig> listServers() {
-        return new ArrayList<>(readServersInternal());
+    public synchronized McpServersConfig readConfig() {
+        return readConfigInternal();
     }
 
-    public synchronized MCPServerConfig addServer(MCPServerConfig server) {
-        if (server == null) {
-            throw new IllegalArgumentException("server is null");
-        }
-        MCPServerConfig normalized = getMcpServerConfig(server);
+    public synchronized Map<String, McpServerDefinition> listServers() {
+        return new LinkedHashMap<>(readConfigInternal().mcpServers());
+    }
 
-        List<MCPServerConfig> servers = readServersInternal();
-        boolean exists = servers.stream().anyMatch(s -> s.id() != null && s.id().equals(normalized.id()));
-        if (exists) {
-            throw new IllegalStateException("server already exists: " + normalized.id());
-        }
-        servers.add(normalized);
-        writeServersInternal(servers);
+    public synchronized McpServersConfig replaceConfig(McpServersConfig config) {
+        McpServersConfig normalized = normalizeConfig(config);
+        writeConfigInternal(normalized);
         return normalized;
     }
 
-    private static @NonNull MCPServerConfig getMcpServerConfig(MCPServerConfig server) {
-        if (server.name() == null || server.name().isBlank()) {
-            throw new IllegalArgumentException("server.name is required");
+    public synchronized McpServerDefinition upsertServer(String name, McpServerDefinition definition) {
+        if (name == null || name.isBlank()) {
+            throw new IllegalArgumentException("server name is required");
         }
-        if (server.url() == null || server.url().isBlank()) {
-            throw new IllegalArgumentException("server.url is required");
-        }
-        String protocol = (server.protocol() == null || server.protocol().isBlank()) ? "SSE" : server.protocol();
-        return new MCPServerConfig(server.id(), server.name(), server.url(), protocol);
+        McpServerDefinition normalized = normalizeDefinition(definition);
+
+        McpServersConfig current = readConfigInternal();
+        Map<String, McpServerDefinition> updated = new LinkedHashMap<>(current.mcpServers());
+        updated.put(name, normalized);
+
+        writeConfigInternal(new McpServersConfig(updated));
+        return normalized;
     }
 
-    public synchronized Optional<MCPServerConfig> deleteServer(String id) {
-        if (id == null || id.isBlank()) {
+    public synchronized Optional<McpServerDefinition> deleteServer(String name) {
+        if (name == null || name.isBlank()) {
             return Optional.empty();
         }
-        List<MCPServerConfig> servers = readServersInternal();
-        MCPServerConfig removed = null;
-        for (int i = 0; i < servers.size(); i++) {
-            MCPServerConfig s = servers.get(i);
-            if (id.equals(s.id())) {
-                removed = s;
-                servers.remove(i);
-                break;
-            }
-        }
+        McpServersConfig current = readConfigInternal();
+        Map<String, McpServerDefinition> updated = new LinkedHashMap<>(current.mcpServers());
+        McpServerDefinition removed = updated.remove(name);
         if (removed != null) {
-            writeServersInternal(servers);
+            writeConfigInternal(new McpServersConfig(updated));
             return Optional.of(removed);
         }
         return Optional.empty();
     }
 
-    private List<MCPServerConfig> readServersInternal() {
-        // 1) 外部文件优先
+    private McpServersConfig readConfigInternal() {
         if (Files.exists(serversFile)) {
             try {
                 byte[] bytes = Files.readAllBytes(serversFile);
                 if (bytes.length == 0) {
-                    return new ArrayList<>();
+                    return new McpServersConfig(null);
                 }
-                return objectMapper.readValue(bytes, new TypeReference<List<MCPServerConfig>>() {});
+                return normalizeConfig(objectMapper.readValue(bytes, McpServersConfig.class));
             } catch (IOException e) {
                 throw new IllegalStateException("Failed to read servers file: " + serversFile, e);
             }
         }
 
-        // 2) fallback：classpath
         try {
             ClassPathResource resource = new ClassPathResource("mcp-servers.json");
             if (!resource.exists()) {
-                return new ArrayList<>();
+                return new McpServersConfig(null);
             }
-            return objectMapper.readValue(resource.getInputStream(), new TypeReference<List<MCPServerConfig>>() {});
+            return normalizeConfig(objectMapper.readValue(resource.getInputStream(), McpServersConfig.class));
         } catch (IOException e) {
             throw new IllegalStateException("Failed to read classpath mcp-servers.json", e);
         }
     }
 
-    private void writeServersInternal(List<MCPServerConfig> servers) {
+    private void writeConfigInternal(McpServersConfig config) {
         try {
             Files.createDirectories(serversFile.getParent());
-            byte[] bytes = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsBytes(servers);
+            byte[] bytes = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsBytes(config);
             Files.write(serversFile, bytes);
         } catch (IOException e) {
             throw new IllegalStateException("Failed to write servers file: " + serversFile, e);
         }
     }
+
+    private McpServersConfig normalizeConfig(McpServersConfig config) {
+        if (config == null || config.mcpServers() == null) {
+            return new McpServersConfig(null);
+        }
+        return new McpServersConfig(config.mcpServers());
+    }
+
+    private McpServerDefinition normalizeDefinition(McpServerDefinition definition) {
+        if (definition == null) {
+            throw new IllegalArgumentException("server definition is required");
+        }
+        if (definition.command() == null || definition.command().isBlank()) {
+            throw new IllegalArgumentException("server command is required");
+        }
+        return new McpServerDefinition(definition.command(), definition.args(), definition.env());
+    }
 }
-
-
-
-
-

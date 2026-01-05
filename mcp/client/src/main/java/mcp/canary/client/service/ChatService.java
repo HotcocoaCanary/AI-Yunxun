@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import mcp.canary.client.dto.ChatResponse;
 import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.chat.memory.ChatMemory;
 import org.springframework.ai.tool.ToolCallback;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
@@ -27,7 +28,7 @@ public class ChatService {
         this.objectMapper = objectMapper;
     }
 
-    public Flux<ChatResponse> streamChat(String message) {
+    public Flux<ChatResponse> streamChat(String conversationId, String message) {
         ToolCallback[] toolCallbacks = mcpClientService.getToolCallbacks();
 
         StringBuilder full = new StringBuilder();
@@ -35,6 +36,7 @@ public class ChatService {
         Flux<ChatResponse> streaming = chatClient
                 .prompt()
                 .user(message)
+                .advisors(advisors -> advisors.param(ChatMemory.CONVERSATION_ID, conversationId))
                 .toolCallbacks(toolCallbacks)
                 .stream()
                 .content()

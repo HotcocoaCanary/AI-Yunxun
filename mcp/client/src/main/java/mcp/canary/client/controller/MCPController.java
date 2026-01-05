@@ -1,15 +1,15 @@
 package mcp.canary.client.controller;
 
-import mcp.canary.client.model.MCPServerConfig;
+import mcp.canary.client.model.McpServerDefinition;
+import mcp.canary.client.model.McpServersConfig;
 import mcp.canary.client.service.MCPClientService;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 import java.util.Map;
 
 /**
- * MCP 服务器管理接口：动态添加/删除服务器配置，并同步维护 MCP client 连接。
+ * MCP server management endpoints (Claude Desktop mcpServers format).
  */
 @RestController
 @RequestMapping("/api/mcp")
@@ -22,24 +22,25 @@ public class MCPController {
     }
 
     @GetMapping("/servers")
-    public List<MCPServerConfig> listServers() {
-        return mcpClientService.listServers();
+    public McpServersConfig listServers() {
+        return new McpServersConfig(mcpClientService.listServers());
     }
 
-    @PostMapping("/servers")
+    @PutMapping("/servers")
+    public McpServersConfig replaceServers(@RequestBody McpServersConfig config) {
+        return mcpClientService.replaceServers(config);
+    }
+
+    @PostMapping("/servers/{name}")
     @ResponseStatus(HttpStatus.CREATED)
-    public MCPServerConfig addServer(@RequestBody MCPServerConfig server) {
-        return mcpClientService.addServer(server);
+    public McpServerDefinition addServer(@PathVariable String name,
+                                         @RequestBody McpServerDefinition definition) {
+        return mcpClientService.addServer(name, definition);
     }
 
-    @DeleteMapping("/servers/{id}")
-    public Map<String, Object> deleteServer(@PathVariable String id) {
-        boolean ok = mcpClientService.deleteServer(id);
-        return Map.of("deleted", ok, "id", id);
+    @DeleteMapping("/servers/{name}")
+    public Map<String, Object> deleteServer(@PathVariable String name) {
+        boolean ok = mcpClientService.deleteServer(name);
+        return Map.of("deleted", ok, "name", name);
     }
 }
-
-
-
-
-

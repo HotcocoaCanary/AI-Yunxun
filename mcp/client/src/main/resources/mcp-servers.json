@@ -1,17 +1,6 @@
-[
-  {
-    "id": "echart-server",
-    "name": "echart-server",
-    "url": "http://localhost:8081",
-    "protocol": "SSE"
-  },
-  {
-    "id": "neo4j-server",
-    "name": "neo4j-server",
-    "url": "http://localhost:8082",
-    "protocol": "SSE"
-  }
-]
+{
+  "mcpServers": {}
+}
 
 
 

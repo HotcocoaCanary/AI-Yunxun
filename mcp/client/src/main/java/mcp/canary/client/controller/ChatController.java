@@ -27,8 +27,12 @@ public class ChatController {
     @PostMapping(value = "/chat", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public Flux<ServerSentEvent<ChatResponse>> chat(@RequestBody ChatRequest request) {
         String message = request != null ? request.message() : null;
-        return chatService.streamChat(message == null ? "" : message)
-                .map(resp -> ServerSentEvent.<ChatResponse>builder(resp)
+        String conversationId = request != null ? request.conversationId() : null;
+        String safeConversationId = (conversationId == null || conversationId.isBlank())
+                ? "default"
+                : conversationId;
+        return chatService.streamChat(safeConversationId, message == null ? "" : message)
+                .map(resp -> ServerSentEvent.builder(resp)
                         .event(resp.type())
                         .build());
     }

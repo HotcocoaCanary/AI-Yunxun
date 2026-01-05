@@ -4,7 +4,16 @@ const els = {
   status: document.getElementById('status'),
   form: document.getElementById('chatForm'),
   input: document.getElementById('input'),
+  serverList: document.getElementById('serverList'),
+  mcpInput: document.getElementById('mcpInput'),
+  importBtn: document.getElementById('importBtn'),
+  refreshBtn: document.getElementById('refreshBtn'),
+  toolStatus: document.getElementById('toolStatus'),
+  conversationId: document.getElementById('conversationId'),
+  newConversationBtn: document.getElementById('newConversationBtn'),
 };
+
+let currentConversationId = null;
 
 function nowTime() {
   const d = new Date();
@@ -36,6 +45,28 @@ function setStatus(text) {
   els.status.textContent = text;
 }
 
+function generateConversationId() {
+  if (window.crypto && window.crypto.randomUUID) {
+    return window.crypto.randomUUID();
+  }
+  return `cid-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+}
+
+function setConversationId(id) {
+  currentConversationId = id;
+  localStorage.setItem('conversationId', id);
+  els.conversationId.textContent = id;
+}
+
+function ensureConversationId() {
+  const saved = localStorage.getItem('conversationId');
+  if (saved) {
+    setConversationId(saved);
+  } else {
+    setConversationId(generateConversationId());
+  }
+}
+
 // --- ECharts ---
 let chart = null;
 function ensureChart() {
@@ -56,6 +87,134 @@ function renderChart(optionJson) {
   }
 }
 
+// --- MCP management ---
+async function fetchServers() {
+  const res = await fetch('/api/mcp/servers');
+  if (!res.ok) {
+    throw new Error(`HTTP ${res.status}`);
+  }
+  const data = await res.json();
+  return data.mcpServers || {};
+}
+
+function renderServers(servers) {
+  els.serverList.innerHTML = '';
+  const entries = Object.entries(servers);
+  if (entries.length === 0) {
+    const empty = document.createElement('div');
+    empty.className = 'server-item';
+    empty.textContent = '暂无外部 MCP 服务';
+    els.serverList.appendChild(empty);
+    return;
+  }
+  for (const [name, def] of entries) {
+    const item = document.createElement('div');
+    item.className = 'server-item';
+    const cmd = [def.command, ...(def.args || [])].join(' ');
+    item.innerHTML = `
+      <div>
+        <div class="name">${name}</div>
+        <div class="cmd">${cmd}</div>
+      </div>
+      <button class="remove" data-name="${name}">移除</button>
+    `;
+    item.querySelector('.remove').addEventListener('click', async () => {
+      await deleteServer(name);
+    });
+    els.serverList.appendChild(item);
+  }
+}
+
+async function refreshServers() {
+  try {
+    const servers = await fetchServers();
+    renderServers(servers);
+  } catch (e) {
+    addLog(`[mcp] ${e.message}`);
+  }
+}
+
+async function importServersFromText() {
+  const raw = (els.mcpInput.value || '').trim();
+  if (!raw) {
+    addLog('[mcp] empty config');
+    return;
+  }
+  let parsed;
+  try {
+    parsed = JSON.parse(raw);
+  } catch (e) {
+    addLog(`[mcp] invalid json: ${e.message}`);
+    return;
+  }
+  const config = parsed.mcpServers ? parsed : { mcpServers: parsed };
+  const res = await fetch('/api/mcp/servers', {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(config),
+  });
+  if (!res.ok) {
+    addLog(`[mcp] import failed: HTTP ${res.status}`);
+    return;
+  }
+  addLog('[mcp] imported');
+  await refreshServers();
+}
+
+async function deleteServer(name) {
+  const res = await fetch(`/api/mcp/servers/${encodeURIComponent(name)}`, {
+    method: 'DELETE',
+  });
+  if (!res.ok) {
+    addLog(`[mcp] delete failed: HTTP ${res.status}`);
+    return;
+  }
+  addLog(`[mcp] removed ${name}`);
+  await refreshServers();
+}
+
+// --- Tool status ---
+function inferToolName(evt) {
+  if (!evt) return 'unknown';
+  if (evt.logger === 'echart-tool') {
+    const msg = evt.message || '';
+    if (msg.includes('柱状图')) return 'echart.bar';
+    if (msg.includes('折线图')) return 'echart.line';
+    if (msg.includes('饼图')) return 'echart.pie';
+    if (msg.includes('关系图')) return 'echart.graph';
+    return 'echart';
+  }
+  if (evt.logger === 'neo4j-tool') {
+    const msg = evt.message || '';
+    if (msg.includes('架构')) return 'neo4j.schema';
+    if (msg.includes('读取')) return 'neo4j.read';
+    if (msg.includes('写入')) return 'neo4j.write';
+    return 'neo4j';
+  }
+  return evt.logger || 'tool';
+}
+
+function inferToolState(evt) {
+  const msg = evt.message || '';
+  if ((evt.level || '').toUpperCase() === 'ERROR') {
+    return { label: '失败', className: 'failed' };
+  }
+  if (msg.includes('开始')) {
+    return { label: '调用中', className: 'running' };
+  }
+  if (msg.includes('完成') || msg.includes('成功')) {
+    return { label: '成功', className: 'success' };
+  }
+  return { label: '处理中', className: 'running' };
+}
+
+function updateToolStatus(evt) {
+  const tool = inferToolName(evt);
+  const state = inferToolState(evt);
+  els.toolStatus.textContent = `工具：${tool} · ${state.label}`;
+  els.toolStatus.className = `tool-status ${state.className}`;
+}
+
 // --- STOMP over WebSocket ---
 function connectToolLogs() {
   const wsUrl = `${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}/ws`;
@@ -69,6 +228,7 @@ function connectToolLogs() {
         try {
           const evt = JSON.parse(frame.body);
           addLog(`[${evt.server}] ${evt.level} ${evt.logger}: ${evt.message}`);
+          updateToolStatus(evt);
         } catch (e) {
           addLog(`[tool-logs] ${frame.body}`);
         }
@@ -140,7 +300,7 @@ els.form.addEventListener('submit', async (e) => {
 
   try {
     setStatus('SSE对话中…');
-    await postSse('/api/chat', { message: text }, (event, data) => {
+    await postSse('/api/chat', { conversationId: currentConversationId, message: text }, (event, data) => {
       try {
         const payload = JSON.parse(data);
         if (payload.type === 'status') {
@@ -154,10 +314,8 @@ els.form.addEventListener('submit', async (e) => {
         }
         if (payload.type === 'chart') {
           renderChart(payload.content);
-          return;
         }
       } catch (_) {
-        // fallback
         addLog(`[sse:${event}] ${data}`);
       }
     });
@@ -167,9 +325,23 @@ els.form.addEventListener('submit', async (e) => {
   }
 });
 
+els.importBtn.addEventListener('click', () => {
+  importServersFromText();
+});
+
+els.refreshBtn.addEventListener('click', () => {
+  refreshServers();
+});
+
+els.newConversationBtn.addEventListener('click', () => {
+  setConversationId(generateConversationId());
+  els.messages.innerHTML = '';
+  if (chart) {
+    chart.clear();
+  }
+  addLog(`[chat] new conversation ${currentConversationId}`);
+});
+
+ensureConversationId();
+refreshServers();
 connectToolLogs();
-
-
-
-
-

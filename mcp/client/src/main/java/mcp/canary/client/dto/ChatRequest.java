@@ -1,9 +1,9 @@
 package mcp.canary.client.dto;
 
 /**
- * 前端发起对话的请求体。
+ * Chat request payload.
  */
-public record ChatRequest(String message) {
+public record ChatRequest(String conversationId, String message) {
 }
 
 
