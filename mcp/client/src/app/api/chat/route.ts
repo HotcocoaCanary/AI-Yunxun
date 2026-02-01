@@ -14,6 +14,64 @@ function sseLine(event: string, data: string): string {
   return `event: ${event}\ndata: ${data}\n\n`;
 }
 
+/** 向 LLM 暴露的 MCP 工具定义（OpenAI 兼容 function calling），使模型能感知并可选返回 tool_calls */
+const LLM_TOOLS: Array<{ type: "function"; function: { name: string; description: string; parameters: Record<string, unknown> } }> = [
+  {
+    type: "function",
+    function: {
+      name: "generate_graph_chart",
+      description: "根据节点和边数据生成 ECharts 关系图（graph）。用于可视化知识图谱、社交网络等。MCP 工具之一。",
+      parameters: {
+        type: "object",
+        properties: {
+          title: { type: "string", description: "图表标题" },
+          data: {
+            type: "object",
+            description: "图数据",
+            properties: {
+              nodes: { type: "array", items: { type: "object", properties: { id: { type: "string" }, name: { type: "string" }, value: { type: "number" }, category: { type: "string" } } } },
+              edges: { type: "array", items: { type: "object", properties: { source: { type: "string" }, target: { type: "string" }, value: { type: "number" } } } },
+            },
+            required: ["nodes"],
+          },
+          layout: { type: "string", description: "布局方式，如 force", default: "force" },
+          width: { type: "number", default: 800 },
+          height: { type: "number", default: 600 },
+          theme: { type: "string", default: "default" },
+          outputType: { type: "string", enum: ["option", "png", "svg"], default: "option" },
+        },
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "generate_graph_gl_chart",
+      description: "根据节点和边数据生成 ECharts GL 3D 关系图。用于大规模关系图或 3D 可视化。MCP 工具之一。",
+      parameters: {
+        type: "object",
+        properties: {
+          title: { type: "string", description: "图表标题" },
+          data: {
+            type: "object",
+            description: "图数据",
+            properties: {
+              nodes: { type: "array", items: { type: "object", properties: { id: { type: "string" }, name: { type: "string" }, value: { type: "number" }, category: { type: "string" } } } },
+              edges: { type: "array", items: { type: "object", properties: { source: { type: "string" }, target: { type: "string" }, value: { type: "number" } } } },
+            },
+            required: ["nodes"],
+          },
+          layout: { type: "string", default: "force" },
+          width: { type: "number", default: 800 },
+          height: { type: "number", default: 600 },
+          theme: { type: "string", default: "default" },
+          outputType: { type: "string", enum: ["option", "png", "svg"], default: "option" },
+        },
+      },
+    },
+  },
+];
+
 export async function POST(request: Request) {
   let body: ChatRequestBody;
   try {
@@ -54,18 +112,21 @@ export async function POST(request: Request) {
           { role: "user" as const, content: message },
         ];
 
+        const llmBody = {
+          model: "glm-4-flash",
+          messages,
+          stream: true,
+          temperature: 0.7,
+          tools: LLM_TOOLS,
+        };
+
         const res = await fetch(`${baseUrl.replace(/\/$/, "")}/chat/completions`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${apiKey}`,
           },
-          body: JSON.stringify({
-            model: "glm-4-flash",
-            messages,
-            stream: true,
-            temperature: 0.7,
-          }),
+          body: JSON.stringify(llmBody),
         });
 
         if (!res.ok) {

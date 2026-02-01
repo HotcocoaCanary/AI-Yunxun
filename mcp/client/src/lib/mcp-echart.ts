@@ -58,7 +58,15 @@ export async function callEchartMcpTool(
 
     const first = content[0];
     if (first.type === "text") {
-      const option = JSON.parse(first.text ?? "{}") as Record<string, unknown>;
+      const parsed = JSON.parse(first.text ?? "{}") as Record<string, unknown>;
+      // MCP 传输可能把整份 { content: [{ type, text }] } 序列化进 first.text，需取出内层 option
+      let option: Record<string, unknown>;
+      const inner = parsed?.content as Array<{ type?: string; text?: string }> | undefined;
+      if (Array.isArray(inner) && inner[0]?.text != null) {
+        option = (JSON.parse(inner[0].text) as Record<string, unknown>) ?? {};
+      } else {
+        option = parsed;
+      }
       return { type: "option", option };
     }
     if (first.type === "image" && first.data != null && first.mimeType != null) {
