@@ -12,53 +12,47 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 /**
- * 关系图服务。
- * 负责关系图的数据验证与 ECharts option 构建，供 generate_graph_chart 使用。
+ * GL 关系图服务。
+ * 构建 ECharts GL 关系图 option（series[].type = "graphGL"），输入与 GraphChartService 一致：
+ * title、data（nodes/edges）、layout、width、height、theme。
  */
 @Service
-public class GraphChartService {
-    
+public class GraphGLChartService {
+
     private static final ObjectMapper objectMapper = new ObjectMapper();
-    
+
     /**
-     * 构建关系图 ECharts option。
+     * 构建 GL 关系图 ECharts option。
      *
      * @param title  图表标题，可为 null
      * @param data   图数据（nodes、edges），不能为空
      * @param layout 布局：force / circular / none，null 时默认 force
-     * @param width  画布宽度（像素），渲染 png/svg 时使用，null 时默认 800
+     * @param width  画布宽度（像素），null 时默认 800
      * @param height 画布高度（像素），null 时默认 600
      * @param theme  主题：default / dark，null 时默认 default
-     * @return ECharts option 的 ObjectNode
+     * @return ECharts option，series[].type = "graphGL"，含 data 与 links
      */
     public ObjectNode buildChartOption(String title, GraphData data, String layout,
                                        Integer width, Integer height, String theme) {
         validateData(data);
-        return buildGraphChartOption(title, data, layout, width, height, theme);
+        return buildGraphGLOption(title, data, layout, width, height, theme);
     }
-    
-    /**
-     * 验证数据
-     */
+
     private void validateData(GraphData data) {
         if (data == null) {
             throw new IllegalArgumentException("数据不能为空");
         }
-        
         if (data.getNodes() == null || data.getNodes().isEmpty()) {
             throw new IllegalArgumentException("节点数据不能为空");
         }
-        
         if (data.getEdges() == null) {
             data.setEdges(new ArrayList<>());
         }
-        
         for (GraphNode node : data.getNodes()) {
             if (node.getId() == null || node.getName() == null) {
                 throw new IllegalArgumentException("节点必须包含 id 和 name 字段");
             }
         }
-        
         Set<String> nodeIds = new HashSet<>();
         for (GraphNode node : data.getNodes()) {
             if (nodeIds.contains(node.getId())) {
@@ -66,7 +60,6 @@ public class GraphChartService {
             }
             nodeIds.add(node.getId());
         }
-        
         for (GraphEdge edge : data.getEdges()) {
             if (edge.getSource() == null || edge.getTarget() == null) {
                 throw new IllegalArgumentException("边必须包含 source 和 target 字段");
@@ -76,10 +69,7 @@ public class GraphChartService {
             }
         }
     }
-    
-    /**
-     * 创建基础 option 结构，可选写入 width/height/theme 供前端或渲染使用。
-     */
+
     private ObjectNode createBaseOption(String title, Integer width, Integer height, String theme) {
         ObjectNode option = objectMapper.createObjectNode();
         if (title != null && !title.isEmpty()) {
@@ -97,25 +87,20 @@ public class GraphChartService {
         }
         return option;
     }
-    
-    /**
-     * 构建关系图 option（含 width/height/theme 占位或生效）。
-     */
-    private ObjectNode buildGraphChartOption(String title, GraphData data, String layout,
-                                            Integer width, Integer height, String theme) {
+
+    private ObjectNode buildGraphGLOption(String title, GraphData data, String layout,
+                                          Integer width, Integer height, String theme) {
         ObjectNode option = createBaseOption(title, width, height, theme);
-        
-        // Tooltip
+
         ObjectNode tooltip = objectMapper.createObjectNode();
         tooltip.put("trigger", "item");
         option.set("tooltip", tooltip);
-        
-        // 提取类别
+
         Set<String> categories = data.getNodes().stream()
                 .map(GraphNode::getCategory)
                 .filter(Objects::nonNull)
                 .collect(Collectors.toCollection(LinkedHashSet::new));
-        
+
         if (!categories.isEmpty()) {
             ObjectNode legend = objectMapper.createObjectNode();
             ArrayNode legendData = objectMapper.createArrayNode();
@@ -125,41 +110,23 @@ public class GraphChartService {
             legend.put("bottom", 10);
             option.set("legend", legend);
         }
-        
-        // 构建类别索引映射
+
         Map<String, Integer> categoryIndexMap = new HashMap<>();
         int index = 0;
         for (String cat : categories) {
             categoryIndexMap.put(cat, index++);
         }
-        
-        // Series
+
         ArrayNode seriesArray = objectMapper.createArrayNode();
         ObjectNode series = objectMapper.createObjectNode();
-        series.put("type", "graph");
+        series.put("type", "graphGL");
         series.put("layout", layout != null ? layout : "force");
         series.put("roam", true);
-        
+
         ObjectNode label = objectMapper.createObjectNode();
         label.put("show", true);
-        label.put("position", "right");
         series.set("label", label);
-        
-        ObjectNode labelLayout = objectMapper.createObjectNode();
-        labelLayout.put("hideOverlap", true);
-        series.set("labelLayout", labelLayout);
-        
-        ObjectNode scaleLimit = objectMapper.createObjectNode();
-        scaleLimit.put("min", 0.4);
-        scaleLimit.put("max", 2);
-        series.set("scaleLimit", scaleLimit);
-        
-        ObjectNode lineStyle = objectMapper.createObjectNode();
-        lineStyle.put("color", "source");
-        lineStyle.put("curveness", 0.3);
-        series.set("lineStyle", lineStyle);
-        
-        // Nodes
+
         ArrayNode nodesArray = objectMapper.createArrayNode();
         for (GraphNode node : data.getNodes()) {
             ObjectNode nodeObj = objectMapper.createObjectNode();
@@ -174,13 +141,12 @@ public class GraphChartService {
             nodesArray.add(nodeObj);
         }
         series.set("data", nodesArray);
-        
-        // Links
+
         ArrayNode linksArray = objectMapper.createArrayNode();
         Set<String> nodeIds = data.getNodes().stream()
                 .map(GraphNode::getId)
                 .collect(Collectors.toSet());
-        
+
         for (GraphEdge edge : data.getEdges()) {
             if (nodeIds.contains(edge.getSource()) && nodeIds.contains(edge.getTarget())) {
                 ObjectNode link = objectMapper.createObjectNode();
@@ -193,8 +159,7 @@ public class GraphChartService {
             }
         }
         series.set("links", linksArray);
-        
-        // Categories
+
         if (!categories.isEmpty()) {
             ArrayNode categoriesArray = objectMapper.createArrayNode();
             for (String cat : categories) {
@@ -204,10 +169,9 @@ public class GraphChartService {
             }
             series.set("categories", categoriesArray);
         }
-        
+
         seriesArray.add(series);
         option.set("series", seriesArray);
         return option;
     }
 }
-

@@ -2,11 +2,9 @@ package mcp.canary.echart.tool;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import mcp.canary.echart.model.*;
-import mcp.canary.echart.service.BarChartService;
+import mcp.canary.echart.model.GraphData;
 import mcp.canary.echart.service.GraphChartService;
-import mcp.canary.echart.service.LineChartService;
-import mcp.canary.echart.service.PieChartService;
+import mcp.canary.echart.service.GraphGLChartService;
 import org.springaicommunity.mcp.annotation.McpTool;
 import org.springaicommunity.mcp.annotation.McpToolParam;
 import io.modelcontextprotocol.server.McpSyncServerExchange;
@@ -20,138 +18,54 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * ECharts MCP 工具类
- * 提供 4 个图表生成工具：柱状图、折线图、饼图、关系图
- * 负责 MCP 协议相关的输出处理
+ * ECharts MCP 工具类。
+ * 仅提供关系图与 GL 关系图两个工具：generate_graph_chart、generate_graph_gl_chart。
+ * 负责 MCP 协议输出与日志通知。
  */
 @Component
 public class EChartMCPTool {
 
     private static final ObjectMapper objectMapper = new ObjectMapper();
 
-    private final BarChartService barChartService;
-    private final LineChartService lineChartService;
-    private final PieChartService pieChartService;
+    private static final int DEFAULT_WIDTH = 800;
+    private static final int DEFAULT_HEIGHT = 600;
+    private static final String DEFAULT_THEME = "default";
+    private static final String DEFAULT_LAYOUT = "force";
+    private static final String DEFAULT_OUTPUT_TYPE = "option";
+
     private final GraphChartService graphChartService;
+    private final GraphGLChartService graphGLChartService;
 
     @Autowired
-    public EChartMCPTool(
-            BarChartService barChartService,
-            LineChartService lineChartService,
-            PieChartService pieChartService,
-            GraphChartService graphChartService) {
-        this.barChartService = barChartService;
-        this.lineChartService = lineChartService;
-        this.pieChartService = pieChartService;
+    public EChartMCPTool(GraphChartService graphChartService, GraphGLChartService graphGLChartService) {
         this.graphChartService = graphChartService;
+        this.graphGLChartService = graphGLChartService;
     }
 
     /**
-     * 1. 柱状图
+     * 生成关系图（网络图）。MCP 工具名：generate_graph_chart。
+     * 输入：title、data（nodes/edges）、layout、width、height、theme、outputType。
+     * 当前仅支持 outputType=option，返回 ECharts option JSON；png/svg 为后续迭代。
+     *
+     * @param title     图表标题，可选
+     * @param data      图数据（nodes、edges），必填
+     * @param layout    布局：force / circular / none
+     * @param width     画布宽度（像素）
+     * @param height    画布高度（像素）
+     * @param theme     主题：default / dark
+     * @param outputType 输出类型：option / png / svg，当前仅支持 option
+     * @param exchange  MCP 交换对象，用于发送日志
+     * @return MCP 响应，content 为 text 类型的 option JSON
      */
-    @McpTool(name = "generate_bar_chart", description = "生成柱状图，用于显示不同类别之间的数值比较")
-    public Map<String, Object> generateBarChart(
-            @McpToolParam(description = "图表标题") String title,
-            @McpToolParam(description = "X 轴标题") String axisXTitle,
-            @McpToolParam(description = "Y 轴标题") String axisYTitle,
-            @McpToolParam(description = "图表数据") List<DataItem> data,
-            @McpToolParam(description = "是否启用分组（多系列时）") Boolean group,
-            @McpToolParam(description = "是否启用堆叠（多系列时）") Boolean stack,
-            @McpToolParam(description = "输出类型，当前仅支持 option") String outputType,
-            McpSyncServerExchange exchange) {
-
-        sendLog(exchange, LoggingLevel.INFO, "开始生成柱状图: " + (title != null ? title : "未命名图表"));
-
-        try {
-            sendLog(exchange, LoggingLevel.INFO, "正在处理数据，共 " + (data != null ? data.size() : 0) + " 条数据");
-
-            ObjectNode option = barChartService.buildChartOption(
-                    title, axisXTitle, axisYTitle, data,
-                    group != null && group, stack != null && stack);
-
-            sendLog(exchange, LoggingLevel.INFO, "柱状图生成完成");
-
-            return buildMCPResponse(option);
-        } catch (Exception e) {
-            sendLog(exchange, LoggingLevel.ERROR, "生成柱状图失败: " + e.getMessage());
-            throw e;
-        }
-    }
-
-    /**
-     * 2. 折线图
-     */
-    @McpTool(name = "generate_line_chart", description = "生成折线图，用于显示数据随时间或其他连续变量的趋势变化")
-    public Map<String, Object> generateLineChart(
-            @McpToolParam(description = "图表标题") String title,
-            @McpToolParam(description = "X 轴标题（通常是时间）") String axisXTitle,
-            @McpToolParam(description = "Y 轴标题") String axisYTitle,
-            @McpToolParam(description = "图表数据") List<DataItem> data,
-            @McpToolParam(description = "是否使用平滑曲线") Boolean smooth,
-            @McpToolParam(description = "是否填充区域") Boolean showArea,
-            @McpToolParam(description = "是否显示数据点标记") Boolean showSymbol,
-            @McpToolParam(description = "是否堆叠（多系列时）") Boolean stack,
-            @McpToolParam(description = "输出类型，当前仅支持 option") String outputType,
-            McpSyncServerExchange exchange) {
-
-        sendLog(exchange, LoggingLevel.INFO, "开始生成折线图: " + (title != null ? title : "未命名图表"));
-
-        try {
-            sendLog(exchange, LoggingLevel.INFO, "正在处理折线图数据，共 " + (data != null ? data.size() : 0) + " 条数据");
-
-            ObjectNode option = lineChartService.buildChartOption(
-                    title, axisXTitle, axisYTitle, data,
-                    smooth != null && smooth,
-                    showArea != null && showArea,
-                    showSymbol == null || showSymbol,
-                    stack != null && stack);
-
-            sendLog(exchange, LoggingLevel.INFO, "折线图生成完成");
-
-            return buildMCPResponse(option);
-        } catch (Exception e) {
-            sendLog(exchange, LoggingLevel.ERROR, "生成折线图失败: " + e.getMessage());
-            throw e;
-        }
-    }
-
-    /**
-     * 3. 饼图
-     */
-    @McpTool(name = "generate_pie_chart", description = "生成饼图，用于显示各部分占整体的比例关系")
-    public Map<String, Object> generatePieChart(
-            @McpToolParam(description = "图表标题") String title,
-            @McpToolParam(description = "图表数据") List<DataItem> data,
-            @McpToolParam(description = "内半径（0-1），0为饼图，>0为环形图") Double innerRadius,
-            @McpToolParam(description = "输出类型，当前仅支持 option") String outputType,
-            McpSyncServerExchange exchange) {
-
-        sendLog(exchange, LoggingLevel.INFO, "开始生成饼图: " + (title != null ? title : "未命名图表"));
-
-        try {
-            sendLog(exchange, LoggingLevel.INFO, "正在处理饼图数据，共 " + (data != null ? data.size() : 0) + " 条数据");
-
-            ObjectNode option = pieChartService.buildChartOption(
-                    title, data, innerRadius != null ? innerRadius : 0.0);
-
-            sendLog(exchange, LoggingLevel.INFO, "饼图生成完成");
-
-            return buildMCPResponse(option);
-        } catch (Exception e) {
-            sendLog(exchange, LoggingLevel.ERROR, "生成饼图失败: " + e.getMessage());
-            throw e;
-        }
-    }
-
-    /**
-     * 4. 关系图
-     */
-    @McpTool(name = "generate_graph_chart", description = "生成关系图（网络图），用于显示实体（节点）之间的关系")
+    @McpTool(name = "generate_graph_chart", description = "生成关系图（网络图），用于显示实体（节点）之间的关系。支持 outputType：option（返回 ECharts option JSON）、png、svg（返回图像，便于嵌入或直接展示）。当前仅支持 option。")
     public Map<String, Object> generateGraphChart(
             @McpToolParam(description = "图表标题") String title,
-            @McpToolParam(description = "图和边数据") GraphData data,
-            @McpToolParam(description = "布局算法") String layout,
-            @McpToolParam(description = "输出类型，当前仅支持 option") String outputType,
+            @McpToolParam(description = "图数据，包含 nodes 与 edges") GraphData data,
+            @McpToolParam(description = "布局：force / circular / none，默认 force") String layout,
+            @McpToolParam(description = "画布宽度（像素），默认 800") Integer width,
+            @McpToolParam(description = "画布高度（像素），默认 600") Integer height,
+            @McpToolParam(description = "主题：default / dark，默认 default") String theme,
+            @McpToolParam(description = "输出类型：option / png / svg，默认 option，当前仅支持 option") String outputType,
             McpSyncServerExchange exchange) {
 
         sendLog(exchange, LoggingLevel.INFO, "开始生成关系图: " + (title != null ? title : "未命名图表"));
@@ -162,11 +76,20 @@ public class EChartMCPTool {
             sendLog(exchange, LoggingLevel.INFO,
                     String.format("正在处理关系图数据，节点数: %d, 边数: %d", nodeCount, edgeCount));
 
-            ObjectNode option = graphChartService.buildChartOption(title, data, layout);
+            int w = (width != null && width > 0) ? width : DEFAULT_WIDTH;
+            int h = (height != null && height > 0) ? height : DEFAULT_HEIGHT;
+            String t = (theme != null && !theme.isEmpty()) ? theme : DEFAULT_THEME;
+            String lay = (layout != null && !layout.isEmpty()) ? layout : DEFAULT_LAYOUT;
+
+            ObjectNode option = graphChartService.buildChartOption(title, data, lay, w, h, t);
+
+            String effectiveOutputType = (outputType != null && !outputType.isEmpty()) ? outputType : DEFAULT_OUTPUT_TYPE;
+            if ("png".equalsIgnoreCase(effectiveOutputType) || "svg".equalsIgnoreCase(effectiveOutputType)) {
+                sendLog(exchange, LoggingLevel.INFO, "当前仅支持 outputType=option，png/svg 为后续迭代，返回 option");
+            }
 
             sendLog(exchange, LoggingLevel.INFO, "关系图生成完成");
-
-            return buildMCPResponse(option);
+            return buildTextContentResponse(option);
         } catch (Exception e) {
             sendLog(exchange, LoggingLevel.ERROR, "生成关系图失败: " + e.getMessage());
             throw e;
@@ -174,11 +97,64 @@ public class EChartMCPTool {
     }
 
     /**
-     * 发送日志通知的辅助方法
+     * 生成 GL 关系图（WebGL）。MCP 工具名：generate_graph_gl_chart。
+     * 输入与 generate_graph_chart 一致；当前仅支持 outputType=option。
      *
-     * @param exchange MCP服务器交换对象，用于发送日志通知
-     * @param level    日志级别
-     * @param message  日志消息
+     * @param title      图表标题，可选
+     * @param data       图数据（nodes、edges），必填
+     * @param layout     布局：force / circular / none
+     * @param width      画布宽度（像素）
+     * @param height     画布高度（像素）
+     * @param theme      主题：default / dark
+     * @param outputType 输出类型：option / png / svg，当前仅支持 option
+     * @param exchange   MCP 交换对象
+     * @return MCP 响应，content 为 text 类型的 option JSON（series[].type = "graphGL"）
+     */
+    @McpTool(name = "generate_graph_gl_chart", description = "生成 GL 关系图（WebGL 3D/GPU 布局），适合较大规模节点边数据。支持 outputType：option、png、svg。当前仅支持 option。")
+    public Map<String, Object> generateGraphGLChart(
+            @McpToolParam(description = "图表标题") String title,
+            @McpToolParam(description = "图数据，包含 nodes 与 edges") GraphData data,
+            @McpToolParam(description = "布局：force / circular / none，默认 force") String layout,
+            @McpToolParam(description = "画布宽度（像素），默认 800") Integer width,
+            @McpToolParam(description = "画布高度（像素），默认 600") Integer height,
+            @McpToolParam(description = "主题：default / dark，默认 default") String theme,
+            @McpToolParam(description = "输出类型：option / png / svg，默认 option，当前仅支持 option") String outputType,
+            McpSyncServerExchange exchange) {
+
+        sendLog(exchange, LoggingLevel.INFO, "开始生成 GL 关系图: " + (title != null ? title : "未命名图表"));
+
+        try {
+            int nodeCount = (data != null && data.getNodes() != null) ? data.getNodes().size() : 0;
+            int edgeCount = (data != null && data.getEdges() != null) ? data.getEdges().size() : 0;
+            sendLog(exchange, LoggingLevel.INFO,
+                    String.format("正在处理 GL 关系图数据，节点数: %d, 边数: %d", nodeCount, edgeCount));
+
+            int w = (width != null && width > 0) ? width : DEFAULT_WIDTH;
+            int h = (height != null && height > 0) ? height : DEFAULT_HEIGHT;
+            String t = (theme != null && !theme.isEmpty()) ? theme : DEFAULT_THEME;
+            String lay = (layout != null && !layout.isEmpty()) ? layout : DEFAULT_LAYOUT;
+
+            ObjectNode option = graphGLChartService.buildChartOption(title, data, lay, w, h, t);
+
+            String effectiveOutputType = (outputType != null && !outputType.isEmpty()) ? outputType : DEFAULT_OUTPUT_TYPE;
+            if ("png".equalsIgnoreCase(effectiveOutputType) || "svg".equalsIgnoreCase(effectiveOutputType)) {
+                sendLog(exchange, LoggingLevel.INFO, "当前仅支持 outputType=option，png/svg 为后续迭代，返回 option");
+            }
+
+            sendLog(exchange, LoggingLevel.INFO, "GL 关系图生成完成");
+            return buildTextContentResponse(option);
+        } catch (Exception e) {
+            sendLog(exchange, LoggingLevel.ERROR, "生成 GL 关系图失败: " + e.getMessage());
+            throw e;
+        }
+    }
+
+    /**
+     * 发送日志通知。
+     *
+     * @param exchange MCP 服务器交换对象
+     * @param level   日志级别
+     * @param message 日志消息
      */
     private void sendLog(McpSyncServerExchange exchange, LoggingLevel level, String message) {
         if (exchange != null) {
@@ -191,20 +167,18 @@ public class EChartMCPTool {
                                 .build()
                 );
             } catch (Exception e) {
-                // 如果日志发送失败，不影响主流程，只记录到控制台
                 System.err.println("Failed to send log notification: " + e.getMessage());
             }
         }
     }
 
     /**
-     * 构建 MCP 标准响应格式
-     * 将 ECharts option 配置转换为 JSON 字符串并包装为 MCP 响应
+     * 将 ECharts option 包装为 MCP text 类型 content 的响应。
      *
-     * @param option ECharts option 配置
-     * @return MCP 标准响应格式
+     * @param option ECharts option
+     * @return MCP 响应 map
      */
-    private Map<String, Object> buildMCPResponse(ObjectNode option) {
+    private Map<String, Object> buildTextContentResponse(ObjectNode option) {
         try {
             String optionJson = objectMapper.writeValueAsString(option);
             Map<String, Object> response = new HashMap<>();
