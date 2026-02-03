@@ -16,8 +16,10 @@ import mcp.canary.echart.module.graph.title.GraphTitle;
 import mcp.canary.echart.module.graph.series.data.GraphCategory;
 import mcp.canary.echart.module.graph.series.data.GraphEdge;
 import mcp.canary.echart.module.graph.series.data.GraphNode;
+import mcp.canary.echart.prompt.GraphEChartMCPPrompt;
 import org.springaicommunity.mcp.annotation.McpTool;
 import org.springaicommunity.mcp.annotation.McpToolParam;
+import org.springaicommunity.mcp.annotation.McpPrompt;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -27,14 +29,19 @@ public class GraphEChartMCPTool {
 
     @McpTool(
             name = "generate_graph_chart",
-            description = "Generate ECharts graph option JSON from nodes/edges/categories."
+            description = "生成 ECharts Graph 图的 option JSON。"
+    )
+    @McpPrompt(
+            name = "graph-option-prompt",
+            title = "生成 ECharts Graph Option JSON",
+            description = GraphEChartMCPPrompt.GRAPH_OPTION_PROMPT
     )
     public String generateGraphOption(
-            @McpToolParam(description = "Chart title") String title,
-            @McpToolParam(description = "Layout type: force or circular") String layout,
-            @McpToolParam(description = "Node list") List<GraphNode> nodes,
-            @McpToolParam(description = "Edge list") List<GraphEdge> edges,
-            @McpToolParam(description = "Category list") List<GraphCategory> categories,
+            @McpToolParam(description = "图表标题，可为空") String title,
+            @McpToolParam(description = "布局类型：force 或 circular，缺省为 force") String layout,
+            @McpToolParam(description = "节点列表，name 必须唯一") List<GraphNode> nodes,
+            @McpToolParam(description = "边列表，source/target 必须存在于节点 name 中") List<GraphEdge> edges,
+            @McpToolParam(description = "分类列表，可为空；为空时由节点 categoryName 自动生成") List<GraphCategory> categories,
             McpSyncServerExchange exchange
     ) {
         sendLog(exchange, LoggingLevel.INFO, "开始生成 ECharts graph option");

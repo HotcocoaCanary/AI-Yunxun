@@ -26,11 +26,6 @@
     </scm>
 
     <dependencies>
-<!--        <dependency>-->
-<!--            <groupId>mcp.canary</groupId>-->
-<!--            <artifactId>shared</artifactId>-->
-<!--            <version>0.0.1-SNAPSHOT</version>-->
-<!--        </dependency>-->
     </dependencies>
 
     <build>

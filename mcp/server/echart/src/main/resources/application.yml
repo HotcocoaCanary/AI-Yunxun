@@ -8,7 +8,7 @@ spring:
     mcp:
       server:
         protocol: SSE
-        name: my-mcp-server
+        name: mcp-echart
         version: 1.0.0
         type: sync
         annotation-scanner:

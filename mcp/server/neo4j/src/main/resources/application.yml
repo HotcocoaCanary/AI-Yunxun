@@ -8,7 +8,7 @@ spring:
     mcp:
       server:
         protocol: SSE
-        name: my
+        name: mcp-neo4j
         version: 1.0.0
         type: sync
         annotation-scanner:
