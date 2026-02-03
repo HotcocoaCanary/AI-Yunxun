@@ -7,7 +7,6 @@ import lombok.Data;
 import mcp.canary.shared.GraphSeries;
 import mcp.canary.shared.module.EChartModule;
 
-
 @Data
 public class GraphOption implements EChartModule {
     private GraphSeries series;
@@ -18,16 +17,20 @@ public class GraphOption implements EChartModule {
     public JsonNode toEChartNode() {
         ObjectNode option = MAPPER.createObjectNode();
 
-        option.set("title", title.toEChartNode());
+        if (title != null) {
+            option.set("title", title.toEChartNode());
+        }
 
-        // tooltip: 直接显示value
+        // tooltip: show value directly
         ObjectNode tooltipNode = MAPPER.createObjectNode();
         tooltipNode.put("trigger", "item");
         tooltipNode.put("formatter", "{c}");
         option.set("tooltip", tooltipNode);
 
         ArrayNode seriesList = MAPPER.createArrayNode();
-        seriesList.add(series.toEChartNode());
+        if (series != null) {
+            seriesList.add(series.toEChartNode());
+        }
         option.set("series", seriesList);
 
         return option;

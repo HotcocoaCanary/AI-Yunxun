@@ -1,20 +1,26 @@
 package mcp.canary.neo4j.tool;
 
-import jakarta.annotation.Resource;
-import mcp.canary.neo4j.service.Neo4jService;
-import org.springaicommunity.mcp.annotation.McpTool;
-import org.springaicommunity.mcp.annotation.McpToolParam;
 import io.modelcontextprotocol.server.McpSyncServerExchange;
 import io.modelcontextprotocol.spec.McpSchema.LoggingLevel;
 import io.modelcontextprotocol.spec.McpSchema.LoggingMessageNotification;
-import org.springframework.stereotype.Component;
+import jakarta.annotation.Resource;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Pattern;
+
+import mcp.canary.neo4j.service.Neo4jService;
+import org.springaicommunity.mcp.annotation.McpTool;
+import org.springaicommunity.mcp.annotation.McpToolParam;
+import org.springframework.stereotype.Component;
 
 @Component
 public class Neo4jMCPTool {
+
+    private static final Pattern DISALLOWED_READ_PATTERN = Pattern.compile(
+            "\\b(CALL|CREATE|MERGE|SET|DELETE|REMOVE|DROP|ALTER|LOAD)\\b", Pattern.CASE_INSENSITIVE
+    );
 
     @Resource
     public Neo4jService neo4jService;
@@ -28,10 +34,10 @@ public class Neo4jMCPTool {
             RETURN label, apoc.map.fromPairs(attributes) as attributes, apoc.map.fromPairs(relationships) as relationships
             """;
 
-    @McpTool(name = "get-neo4j-schema", description = "列出 Neo4j 数据库中的所有节点类型、它们的属性以及它们与其他节点类型之间的关系")
+    @McpTool(name = "get-neo4j-schema", description = "List all node labels, properties, and relationships in Neo4j (requires APOC).")
     public List<Map<String, Object>> neo4jSchema(McpSyncServerExchange exchange) {
         sendLog(exchange, LoggingLevel.INFO, "开始获取 Neo4j 数据库架构信息");
-        
+
         try {
             List<Map<String, Object>> result = neo4jService.executeQuery(SCHEMA, Collections.emptyMap());
             sendLog(exchange, LoggingLevel.INFO, "成功获取架构信息，共 " + result.size() + " 个节点类型");
@@ -42,20 +48,26 @@ public class Neo4jMCPTool {
         }
     }
 
-    @McpTool(name = "read-neo4j-cypher", description = "在 neo4j 数据库上执行 Cypher 查询")
+    @McpTool(name = "read-neo4j-cypher", description = "Execute a read-only Cypher query on Neo4j.")
     public List<Map<String, Object>> neo4jRead(
             @McpToolParam(description = "Cypher 读取要执行的查询") String query,
             McpSyncServerExchange exchange) {
-        
+
         sendLog(exchange, LoggingLevel.INFO, "开始执行 Neo4j 读取查询");
-        sendLog(exchange, LoggingLevel.INFO, "查询语句: " + (query != null ? query.substring(0, Math.min(100, query.length())) + (query.length() > 100 ? "..." : "") : "null"));
-        
+        sendLog(exchange, LoggingLevel.INFO, "查询语句: " + previewQuery(query));
+
         try {
+            if (query == null || query.isBlank()) {
+                throw new IllegalArgumentException("查询不能是空的。");
+            }
+            if (DISALLOWED_READ_PATTERN.matcher(query).find()) {
+                throw new IllegalArgumentException("读取查询不得包含写入关键词或CALL。");
+            }
             if (neo4jService.isWriteQuery(query)) {
                 sendLog(exchange, LoggingLevel.ERROR, "读取查询只允许使用 MATCH 查询");
                 throw new IllegalArgumentException("读取查询只允许使用 MATCH 查询。");
             }
-            
+
             List<Map<String, Object>> result = neo4jService.executeQuery(query, Collections.emptyMap());
             sendLog(exchange, LoggingLevel.INFO, "读取查询执行完成，返回 " + result.size() + " 条记录");
             return result;
@@ -65,41 +77,61 @@ public class Neo4jMCPTool {
         }
     }
 
-    @McpTool(name = "write-neo4j-cypher", description = "在 Neo4j 数据库上执行写入 Cypher 查询")
+    @McpTool(name = "write-neo4j-cypher", description = "Execute a write Cypher query on Neo4j.")
     public List<Map<String, Object>> neo4jWrite(
-            @McpToolParam(description = "编写 Cypher 查询语句并执行") String query,
+            @McpToolParam(description = "Write Cypher query") String query,
             McpSyncServerExchange exchange) {
-        
-        sendLog(exchange, LoggingLevel.INFO, "开始执行 Neo4j 写入查询");
-        sendLog(exchange, LoggingLevel.INFO, "查询语句: " + (query != null ? query.substring(0, Math.min(100, query.length())) + (query.length() > 100 ? "..." : "") : "null"));
-        
+
+        sendLog(exchange, LoggingLevel.INFO, "开始执行 Neo4j 读取查询");
+        sendLog(exchange, LoggingLevel.INFO, "查询语句: " + previewQuery(query));
+
         try {
-            if (!neo4jService.isWriteQuery(query)) {
-                sendLog(exchange, LoggingLevel.ERROR, "仅允许对写入查询执行写入操作");
-                throw new IllegalArgumentException("仅允许对写入查询执行写入操作。");
+            if (query == null || query.isBlank()) {
+                throw new IllegalArgumentException("查询不能是空的。");
             }
-            
+            if (!neo4jService.isWriteQuery(query)) {
+                throw new IllegalArgumentException("写查询必须包含写作。");
+            }
+
             List<Map<String, Object>> result = neo4jService.executeQuery(query, Collections.emptyMap());
-            
+
             // 从结果中提取写入统计信息
             if (!result.isEmpty() && result.get(0).containsKey("nodesCreated")) {
                 Map<String, Object> counters = result.get(0);
-                sendLog(exchange, LoggingLevel.INFO, 
-                    String.format("写入操作完成 - 创建节点: %d, 创建关系: %d, 设置属性: %d",
-                        (Integer) counters.getOrDefault("nodesCreated", 0),
-                        (Integer) counters.getOrDefault("relationshipsCreated", 0),
-                        (Integer) counters.getOrDefault("propertiesSet", 0)));
+                sendLog(exchange, LoggingLevel.INFO,
+                    String.format(
+                        "写入操作完成 - 创建节点: %s, 创建关系: %s, 设置属性:  %s",
+                        toNumber(counters.get("nodesCreated")),
+                        toNumber(counters.get("relationshipsCreated")),
+                        toNumber(counters.get("propertiesSet"))
+                    )
+                );
             } else {
                 sendLog(exchange, LoggingLevel.INFO, "写入查询执行完成");
             }
-            
+
             return result;
         } catch (Exception e) {
             sendLog(exchange, LoggingLevel.ERROR, "执行写入查询失败: " + e.getMessage());
             throw e;
         }
     }
-    
+
+    private String previewQuery(String query) {
+        if (query == null) {
+            return "null";
+        }
+        int maxLen = Math.min(100, query.length());
+        return query.substring(0, maxLen) + (query.length() > 100 ? "..." : "");
+    }
+
+    private String toNumber(Object value) {
+        if (value instanceof Number) {
+            return String.valueOf(((Number) value).longValue());
+        }
+        return String.valueOf(value);
+    }
+
     /**
      * 发送日志通知的辅助方法
      * 

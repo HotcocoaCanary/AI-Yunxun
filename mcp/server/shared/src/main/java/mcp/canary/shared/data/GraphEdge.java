@@ -38,7 +38,7 @@ public class GraphEdge implements EChartModule {
         objectNode.put("target", target);
 
         if (value != null) {
-            objectNode.put("value", "长度"+value.doubleValue());
+            objectNode.put("value", value.doubleValue());
         }
         return objectNode;
     }

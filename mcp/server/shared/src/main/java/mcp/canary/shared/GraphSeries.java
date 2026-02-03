@@ -3,15 +3,14 @@ package mcp.canary.shared;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import lombok.Data;
 import mcp.canary.shared.data.GraphCategory;
 import mcp.canary.shared.data.GraphEdge;
 import mcp.canary.shared.data.GraphNode;
 import mcp.canary.shared.module.EChartModule;
-
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 @Data
 public class GraphSeries implements EChartModule {
@@ -48,21 +47,23 @@ public class GraphSeries implements EChartModule {
 
         // type: graph
         seriesNode.put("type", type);
-        // layout: 布局
-        seriesNode.put("layout", layout.equals("circular") ? "circular" : "force");
+        // layout
+        String safeLayout = "force";
+        if ("circular".equalsIgnoreCase(layout)) {
+            safeLayout = "circular";
+        }
+        seriesNode.put("layout", safeLayout);
         //
         seriesNode.put("draggable", true);
         seriesNode.put("symbolSize", 35);
 
-        // label：直接显示 node.label
+        // label
         ObjectNode labelNode = MAPPER.createObjectNode();
         labelNode.put("show", true);
         labelNode.put("formatter", "{b}");
         seriesNode.set("label", labelNode);
 
-        // 添加category
-
-        // 生成 categoryMap
+        // category map
         Map<String, Integer> categoryMap = new HashMap<>();
         if (categories != null) {
             for (int i = 0; i < categories.size(); i++) {
@@ -70,29 +71,35 @@ public class GraphSeries implements EChartModule {
             }
         }
 
-        // categories：
+        // categories
         ArrayNode categoriesList = MAPPER.createArrayNode();
-        for (GraphCategory index : categories) {
-            JsonNode res = index.toEChartNode();
-            categoriesList.add(res);
+        if (categories != null) {
+            for (GraphCategory index : categories) {
+                JsonNode res = index.toEChartNode();
+                categoriesList.add(res);
+            }
         }
         seriesNode.set("categories", categoriesList);
 
-        // data：nodes
+        // data: nodes
         ArrayNode dataList = MAPPER.createArrayNode();
-        for (GraphNode index : nodes) {
-            ObjectNode nodeJson = (ObjectNode) index.toEChartNode();
-            Integer idx = categoryMap.get(index.getCategoryName());
-            nodeJson.put("category", idx != null ? idx : -1);
-            dataList.add(nodeJson);
+        if (nodes != null) {
+            for (GraphNode index : nodes) {
+                ObjectNode nodeJson = (ObjectNode) index.toEChartNode();
+                Integer idx = categoryMap.get(index.getCategoryName());
+                nodeJson.put("category", idx != null ? idx : -1);
+                dataList.add(nodeJson);
+            }
         }
         seriesNode.set("data", dataList);
 
-        // like: edges
+        // links: edges
         ArrayNode likeList = MAPPER.createArrayNode();
-        for (GraphEdge index : edges) {
-            JsonNode res = index.toEChartNode();
-            likeList.add(res);
+        if (edges != null) {
+            for (GraphEdge index : edges) {
+                JsonNode res = index.toEChartNode();
+                likeList.add(res);
+            }
         }
         seriesNode.set("links", likeList);
 
