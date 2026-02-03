@@ -1,9 +1,9 @@
-package mcp.canary.shared.data;
+package mcp.canary.echart.module.graph.series.data;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.Data;
-import mcp.canary.shared.module.EChartModule;
+import mcp.canary.echart.module.EChartModule;
 
 import java.util.Arrays;
 import java.util.List;

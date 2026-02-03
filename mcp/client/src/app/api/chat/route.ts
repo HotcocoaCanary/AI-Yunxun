@@ -1,10 +1,3 @@
-/**
- * 对话 API：POST /api/chat，返回 SSE 流。
- * 流程：调用 LLM 流式对话；若 LLM 返回 tool_calls，则通过 MCP 调用 Neo4j/ECharts，将结果喂回 LLM 或通过 SSE 推送 chart。
- * SSE 事件类型：status（思考中/完成）、text（流式片段）、chart（option 或 image）、可选 tool_log。
- * MCP 服务器地址从环境变量 ECHART_MCP_URL、NEO4J_MCP_URL 读取。
- */
-
 import { callEchartMcpTool } from "@/lib/mcp-echart";
 import type { ChatRequestBody, EchartGraphRequestBody, EchartGraphResponse } from "@/lib/types";
 
@@ -14,110 +7,97 @@ function sseLine(event: string, data: string): string {
   return `event: ${event}\ndata: ${data}\n\n`;
 }
 
-/** 向 LLM 暴露的 MCP 工具定义（OpenAI 兼容 function calling），使模型能感知并可选返回 tool_calls */
-const LLM_TOOLS: Array<{ type: "function"; function: { name: string; description: string; parameters: Record<string, unknown> } }> = [
-  {
-    type: "function",
-    function: {
-      name: "generate_graph_chart",
-      description: "根据节点和边数据生成 ECharts 关系图（graph）。用于可视化知识图谱、社交网络等。MCP 工具之一。",
-      parameters: {
-        type: "object",
-        properties: {
-          title: { type: "string", description: "图表标题" },
-          data: {
-            type: "object",
-            description: "图数据",
-            properties: {
-              nodes: { type: "array", items: { type: "object", properties: { id: { type: "string" }, name: { type: "string" }, value: { type: "number" }, category: { type: "string" } } } },
-              edges: { type: "array", items: { type: "object", properties: { source: { type: "string" }, target: { type: "string" }, value: { type: "number" } } } },
-            },
-            required: ["nodes"],
-          },
-          layout: { type: "string", description: "布局方式，如 force", default: "force" },
-          width: { type: "number", default: 800 },
-          height: { type: "number", default: 600 },
-          theme: { type: "string", default: "default" },
-          outputType: { type: "string", enum: ["option", "png", "svg"], default: "option" },
-        },
-      },
+type ToolCallState = {
+  id?: string;
+  name?: string;
+  argumentsText: string;
+};
+
+type McpToolConfig = {
+  type: "mcp";
+  mcp: {
+    server_label?: string;
+    server_url?: string;
+    transport_type?: "sse" | "streamable-http";
+    allowed_tools?: string[];
+    headers?: Record<string, string>;
+  };
+};
+
+function buildMcpToolConfig(): McpToolConfig | null {
+  const serverLabel = process.env.LLM_MCP_SERVER_LABEL;
+  const serverUrl = process.env.ECHART_MCP_URL;
+  const transport = process.env.LLM_MCP_TRANSPORT;
+  const headersJson = process.env.LLM_MCP_HEADERS_JSON;
+
+  if (!serverLabel && !serverUrl) {
+    return null;
+  }
+
+  let headers: Record<string, string> | undefined;
+  if (headersJson) {
+    try {
+      headers = JSON.parse(headersJson) as Record<string, string>;
+    } catch {
+      headers = undefined;
+    }
+  }
+
+  return {
+    type: "mcp",
+    mcp: {
+      server_label: serverLabel || undefined,
+      server_url: serverLabel ? undefined : serverUrl,
+      transport_type: transport === "sse" ? "sse" : "streamable-http",
+      allowed_tools: ["generate_graph_chart", "get-neo4j-schema", "read-neo4j-cypher", "write-neo4j-cypher"],
+      headers,
     },
-  },
-  {
-    type: "function",
-    function: {
-      name: "generate_graph_gl_chart",
-      description: "根据节点和边数据生成 ECharts GL 3D 关系图。用于大规模关系图或 3D 可视化。MCP 工具之一。",
-      parameters: {
-        type: "object",
-        properties: {
-          title: { type: "string", description: "图表标题" },
-          data: {
-            type: "object",
-            description: "图数据",
-            properties: {
-              nodes: { type: "array", items: { type: "object", properties: { id: { type: "string" }, name: { type: "string" }, value: { type: "number" }, category: { type: "string" } } } },
-              edges: { type: "array", items: { type: "object", properties: { source: { type: "string" }, target: { type: "string" }, value: { type: "number" } } } },
-            },
-            required: ["nodes"],
-          },
-          layout: { type: "string", default: "force" },
-          width: { type: "number", default: 800 },
-          height: { type: "number", default: 600 },
-          theme: { type: "string", default: "default" },
-          outputType: { type: "string", enum: ["option", "png", "svg"], default: "option" },
-        },
-      },
-    },
-  },
-];
+  };
+}
 
 export async function POST(request: Request) {
   let body: ChatRequestBody;
   try {
     body = (await request.json()) as ChatRequestBody;
   } catch {
-    return new Response(JSON.stringify({ error: "请求体须为 JSON，含 message" }), {
+    return new Response(JSON.stringify({ error: "Request body must be JSON with message." }), {
       status: 400,
     });
   }
 
   const message = body?.message?.trim();
   if (!message) {
-    return new Response(JSON.stringify({ error: "message 不能为空" }), {
+    return new Response(JSON.stringify({ error: "message is required" }), {
       status: 400,
     });
   }
 
   const stream = new ReadableStream<Uint8Array>({
     async start(controller) {
-      const push = (event: string, data: string) => {
-        controller.enqueue(ENCODING.encode(sseLine(event, data)));
-      };
+      let closed = false;\n      const safeClose = () => {\n        if (!closed) {\n          closed = true;\n          safeClose();\n        }\n      };\n\n      const push = (event: string, data: string) => {\n        if (closed) return;\n        controller.enqueue(ENCODING.encode(sseLine(event, data)));\n      };
 
       try {
-        push("status", "思考中");
+        push("status", "thinking");
 
         const apiKey = process.env.LLM_API_KEY;
         const baseUrl = process.env.LLM_BASE_URL ?? "https://open.bigmodel.cn/api/paas/v4";
 
         if (!apiKey) {
-          push("text", "[未配置 LLM_API_KEY，仅演示 SSE。请配置后使用对话与 MCP 工具。]");
-          push("status", "完成");
-          controller.close();
+          push("text", "[LLM_API_KEY is not configured.]");
+          push("status", "done");
+          safeClose();
           return;
         }
 
-        const messages = [
-          { role: "user" as const, content: message },
-        ];
+        const messages = [{ role: "user" as const, content: message }];
 
+        const toolConfig = buildMcpToolConfig();
         const llmBody = {
           model: "glm-4-flash",
           messages,
           stream: true,
           temperature: 0.7,
-          tools: LLM_TOOLS,
+          tools: toolConfig ? [toolConfig] : undefined,
         };
 
         const res = await fetch(`${baseUrl.replace(/\/$/, "")}/chat/completions`, {
@@ -130,22 +110,38 @@ export async function POST(request: Request) {
         });
 
         if (!res.ok) {
-          push("text", `[LLM 请求失败: ${res.status}]`);
-          push("status", "完成");
-          controller.close();
+          push("text", `[LLM request failed: ${res.status}]`);
+          push("status", "done");
+          safeClose();
           return;
         }
 
         const reader = res.body?.getReader();
         if (!reader) {
-          push("text", "[无响应体]");
-          push("status", "完成");
-          controller.close();
+          push("text", "[No response body]");
+          push("status", "done");
+          safeClose();
           return;
         }
 
+        const toolCalls = new Map<number, ToolCallState>();
         const decoder = new TextDecoder();
         let buffer = "";
+
+        const recordToolCall = (toolCall: any) => {
+          const index = typeof toolCall.index === "number" ? toolCall.index : 0;
+          const existing = toolCalls.get(index) ?? { argumentsText: "" };
+          const name = toolCall.function?.name ?? toolCall.mcp?.name ?? toolCall.name;
+          const args = toolCall.function?.arguments ?? toolCall.mcp?.arguments ?? toolCall.arguments;
+
+          if (toolCall.id) existing.id = toolCall.id;
+          if (name) existing.name = name;
+          if (typeof args === "string") {
+            existing.argumentsText += args;
+          }
+          toolCalls.set(index, existing);
+        };
+
         while (true) {
           const { done, value } = await reader.read();
           if (done) break;
@@ -153,27 +149,55 @@ export async function POST(request: Request) {
           const lines = buffer.split("\n");
           buffer = lines.pop() ?? "";
           for (const line of lines) {
-            if (line.startsWith("data: ") && line !== "data: [DONE]") {
-              try {
-                const json = JSON.parse(line.slice(6)) as { choices?: Array<{ delta?: { content?: string } }> };
-                const content = json.choices?.[0]?.delta?.content;
-                if (typeof content === "string" && content) {
-                  push("text", content);
-                }
-              } catch {
-                // ignore parse error
+            if (!line.startsWith("data: ") || line === "data: [DONE]") continue;
+            const payload = line.slice(6);
+            try {
+              const json = JSON.parse(payload) as {
+                choices?: Array<{
+                  delta?: { content?: string; tool_calls?: Array<any> };
+                  finish_reason?: string | null;
+                }>;
+              };
+              const choice = json.choices?.[0];
+              const delta = choice?.delta;
+              if (typeof delta?.content === "string" && delta.content) {
+                push("text", delta.content);
               }
+              if (Array.isArray(delta?.tool_calls)) {
+                for (const tc of delta.tool_calls) recordToolCall(tc);
+              }
+            } catch {
+              // ignore parse error
             }
           }
         }
 
-        push("status", "完成");
+        if (toolCalls.size > 0) {
+          for (const [, call] of Array.from(toolCalls.entries()).sort((a, b) => a[0] - b[0])) {
+            if (!call.name) continue;
+            let args: Record<string, unknown> = {};
+            if (call.argumentsText) {
+              try {
+                args = JSON.parse(call.argumentsText) as Record<string, unknown>;
+              } catch {
+                push("tool_log", "Failed to parse tool arguments.");
+              }
+            }
+
+            const chart = await invokeEchartToolAndGetChart(call.name, args);
+            if (chart) {
+              push("chart", JSON.stringify(chart));
+            }
+          }
+        }
+
+        push("status", "done");
       } catch (e) {
         const errMsg = e instanceof Error ? e.message : String(e);
-        push("text", `[错误: ${errMsg}]`);
-        push("status", "完成");
+        push("text", `[Error: ${errMsg}]`);
+        push("status", "done");
       } finally {
-        controller.close();
+        safeClose();
       }
     },
   });
@@ -187,16 +211,13 @@ export async function POST(request: Request) {
   });
 }
 
-/**
- * 供内部或后续扩展：根据 tool_call 名称与参数调用 ECharts MCP 并返回 chart 结果。
- * 若为 generate_graph_chart / generate_graph_gl_chart，则返回 EchartGraphResponse，可推送给前端。
- */
 export async function invokeEchartToolAndGetChart(
   toolName: string,
   args: Record<string, unknown>
 ): Promise<EchartGraphResponse | null> {
   const url = process.env.ECHART_MCP_URL;
   if (!url) return null;
+
   const body: EchartGraphRequestBody = {
     title: args.title as string | undefined,
     data: args.data as EchartGraphRequestBody["data"],
@@ -206,11 +227,9 @@ export async function invokeEchartToolAndGetChart(
     theme: (args.theme as string) ?? "default",
     outputType: ((args.outputType as string) ?? "option") as "option" | "png" | "svg",
   };
+
   if (toolName === "generate_graph_chart") {
     return callEchartMcpTool(url, "generate_graph_chart", body);
-  }
-  if (toolName === "generate_graph_gl_chart") {
-    return callEchartMcpTool(url, "generate_graph_gl_chart", body);
   }
   return null;
 }

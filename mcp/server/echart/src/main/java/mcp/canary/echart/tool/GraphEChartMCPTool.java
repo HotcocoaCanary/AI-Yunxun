@@ -10,13 +10,12 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import mcp.canary.echart.graph.GraphOption;
-import mcp.canary.echart.graph.GraphTitle;
-import mcp.canary.shared.GraphSeries;
-import mcp.canary.shared.data.GraphCategory;
-import mcp.canary.shared.data.GraphEdge;
-import mcp.canary.shared.data.GraphNode;
-import org.springaicommunity.mcp.annotation.McpPrompt;
+import mcp.canary.echart.module.graph.GraphOption;
+import mcp.canary.echart.module.graph.series.GraphSeries;
+import mcp.canary.echart.module.graph.title.GraphTitle;
+import mcp.canary.echart.module.graph.series.data.GraphCategory;
+import mcp.canary.echart.module.graph.series.data.GraphEdge;
+import mcp.canary.echart.module.graph.series.data.GraphNode;
 import org.springaicommunity.mcp.annotation.McpTool;
 import org.springaicommunity.mcp.annotation.McpToolParam;
 import org.springframework.stereotype.Component;
@@ -29,11 +28,6 @@ public class GraphEChartMCPTool {
     @McpTool(
             name = "generate_graph_chart",
             description = "Generate ECharts graph option JSON from nodes/edges/categories."
-    )
-    @McpPrompt(
-            name = "graph-option-prompt",
-            title = "Generate ECharts Graph Option JSON",
-            description = "Return a valid ECharts graph option JSON based on the input nodes, edges, and categories."
     )
     public String generateGraphOption(
             @McpToolParam(description = "Chart title") String title,

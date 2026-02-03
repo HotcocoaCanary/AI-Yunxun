@@ -1,4 +1,4 @@
-package mcp.canary.shared.module;
+package mcp.canary.echart.module;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;

@@ -1,4 +1,4 @@
-package mcp.canary.shared;
+package mcp.canary.echart.module.graph.series;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -7,10 +7,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import lombok.Data;
-import mcp.canary.shared.data.GraphCategory;
-import mcp.canary.shared.data.GraphEdge;
-import mcp.canary.shared.data.GraphNode;
-import mcp.canary.shared.module.EChartModule;
+import mcp.canary.echart.module.graph.series.data.GraphCategory;
+import mcp.canary.echart.module.graph.series.data.GraphEdge;
+import mcp.canary.echart.module.graph.series.data.GraphNode;
+import mcp.canary.echart.module.EChartModule;
 
 @Data
 public class GraphSeries implements EChartModule {

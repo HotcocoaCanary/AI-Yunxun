@@ -1,8 +1,3 @@
-/**
- * 对话输入：输入框 + 发送按钮。
- * 提交时 POST /api/chat，建立 SSE 连接，将 EventSource/ReadableStream 交给父组件或通过回调上报 text/status/chart。
- */
-
 "use client";
 
 import React, { useState, useCallback } from "react";
@@ -31,25 +26,28 @@ export default function ChatInput({ disabled, onSend }: ChatInputProps) {
       onSubmit={handleSubmit}
       style={{
         padding: 12,
-        borderTop: "1px solid #e0e0e0",
+        borderTop: "1px solid #e5e7eb",
         display: "flex",
         gap: 8,
         alignItems: "flex-end",
+        background: "rgba(255,255,255,0.7)",
+        backdropFilter: "blur(8px)",
       }}
     >
       <textarea
         value={value}
         onChange={(e) => setValue(e.target.value)}
-        placeholder="输入消息…"
+        placeholder="Type a message..."
         disabled={disabled}
         rows={2}
         style={{
           flex: 1,
           resize: "none",
-          padding: 8,
+          padding: 10,
           fontSize: 14,
-          border: "1px solid #ccc",
-          borderRadius: 6,
+          border: "1px solid #d1d5db",
+          borderRadius: 10,
+          background: "#fff",
         }}
       />
       <button
@@ -58,14 +56,14 @@ export default function ChatInput({ disabled, onSend }: ChatInputProps) {
         style={{
           padding: "8px 16px",
           fontSize: 14,
-          border: "1px solid #333",
-          borderRadius: 6,
-          background: "#333",
+          border: "1px solid #111827",
+          borderRadius: 10,
+          background: "#111827",
           color: "#fff",
           cursor: disabled ? "not-allowed" : "pointer",
         }}
       >
-        发送
+        Send
       </button>
     </form>
   );

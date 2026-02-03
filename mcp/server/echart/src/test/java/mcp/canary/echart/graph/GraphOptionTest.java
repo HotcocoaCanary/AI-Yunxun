@@ -3,10 +3,12 @@ package mcp.canary.echart.graph;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.core.JsonGenerator;
-import mcp.canary.shared.GraphSeries;
-import mcp.canary.shared.data.GraphCategory;
-import mcp.canary.shared.data.GraphEdge;
-import mcp.canary.shared.data.GraphNode;
+import mcp.canary.echart.module.graph.GraphOption;
+import mcp.canary.echart.module.graph.series.GraphSeries;
+import mcp.canary.echart.module.graph.title.GraphTitle;
+import mcp.canary.echart.module.graph.series.data.GraphCategory;
+import mcp.canary.echart.module.graph.series.data.GraphEdge;
+import mcp.canary.echart.module.graph.series.data.GraphNode;
 
 import java.util.Arrays;
 import java.util.HashMap;

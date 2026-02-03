@@ -1,11 +1,12 @@
-package mcp.canary.echart.graph;
+package mcp.canary.echart.module.graph;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.Data;
-import mcp.canary.shared.GraphSeries;
-import mcp.canary.shared.module.EChartModule;
+import mcp.canary.echart.module.EChartModule;
+import mcp.canary.echart.module.graph.series.GraphSeries;
+import mcp.canary.echart.module.graph.title.GraphTitle;
 
 @Data
 public class GraphOption implements EChartModule {
