@@ -1,11 +1,20 @@
 package mcp.canary.neo4j.service;
 
 import mcp.canary.neo4j.db.Neo4jConnection;
+import mcp.canary.shared.GraphSeries;
+import mcp.canary.shared.data.GraphCategory;
+import mcp.canary.shared.data.GraphEdge;
+import mcp.canary.shared.data.GraphNode;
 import org.neo4j.driver.Result;
+import org.neo4j.driver.Value;
 import org.neo4j.driver.exceptions.Neo4jException;
 import org.neo4j.driver.summary.ResultSummary;
 import org.neo4j.driver.summary.SummaryCounters;
+import org.neo4j.driver.types.Node;
+import org.neo4j.driver.types.Path;
+import org.neo4j.driver.types.Relationship;
 import org.neo4j.driver.types.MapAccessor;
+import org.neo4j.driver.Record;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -14,7 +23,12 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.HashSet;
+import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 @Service
 public class Neo4jService {
@@ -94,6 +108,95 @@ public class Neo4jService {
             logger.error("执行查询时发生数据库错误：{}\n查询语句：{}", e.getMessage(), query, e);
             return Collections.emptyList();
         }
+    }
+
+    // 在 Neo4jService 类中添加以下方法
+    public GraphSeries executeGraphQuery(String query, Map<String, Object> params) {
+        GraphSeries series = new GraphSeries();
+        series.setLayout("force");
+
+        // 使用 elementId 字符串作为 Map 的 Key
+        Map<String, GraphNode> nodeMap = new HashMap<>();
+        Map<String, GraphEdge> edgeMap = new HashMap<>();
+        Set<String> categoryNames = new HashSet<>();
+
+        try (var session = neo4jConnection.createSession()) {
+            // 执行并获取结果列表
+            List<Record> records = session.run(query, params != null ? params : Collections.emptyMap()).list();
+
+            for (Record record : records) {
+                // record.values() 返回的是 List<Value>
+                for (Value value : record.values()) {
+
+                    // 根据驱动 5.x 的类型判断方式
+                    if (value.type().name().equals("NODE")) {
+                        processNode(value.asNode(), nodeMap, categoryNames);
+                    }
+                    else if (value.type().name().equals("RELATIONSHIP")) {
+                        processRelationship(value.asRelationship(), edgeMap);
+                    }
+                    else if (value.type().name().equals("PATH")) {
+                        Path path = value.asPath();
+                        path.nodes().forEach(n -> processNode(n, nodeMap, categoryNames));
+                        path.relationships().forEach(r -> processRelationship(r, edgeMap));
+                    }
+                }
+            }
+        }
+
+        series.setNodes(new ArrayList<>(nodeMap.values()));
+        series.setEdges(new ArrayList<>(edgeMap.values()));
+
+        // 生成分类列表
+        List<GraphCategory> categories = categoryNames.stream().map(name -> {
+            GraphCategory cat = new GraphCategory();
+            cat.setName(name);
+            cat.setSymbol("circle");
+            return cat;
+        }).collect(Collectors.toList());
+        series.setCategories(categories);
+
+        return series;
+    }
+
+    private void processNode(Node node, Map<String, GraphNode> nodeMap, Set<String> categoryNames) {
+        String elementId = node.elementId(); // 使用新的 elementId
+        if (nodeMap.containsKey(elementId)) return;
+
+        GraphNode gNode = new GraphNode();
+        gNode.setName(elementId);
+
+        // 获取 Label
+        String label = "Unknown";
+        Iterator<String> labels = node.labels().iterator();
+        if (labels.hasNext()) {
+            label = labels.next();
+        }
+
+        gNode.setCategoryName(label);
+        categoryNames.add(label);
+        gNode.setProperties(new HashMap<>(node.asMap()));
+
+        nodeMap.put(elementId, gNode);
+    }
+
+    private void processRelationship(Relationship rel, Map<String, GraphEdge> edgeMap) {
+        String elementId = rel.elementId(); // 使用新的 elementId
+        if (edgeMap.containsKey(elementId)) return;
+
+        GraphEdge gEdge = new GraphEdge();
+        // 使用 elementId 保证 source/target 能正确匹配 node.name
+        gEdge.setSource(rel.startNodeElementId());
+        gEdge.setTarget(rel.endNodeElementId());
+        gEdge.setProperties(new HashMap<>(rel.asMap()));
+
+        // 修正：rel.get() 只接收一个参数，并检查是否为 NULL 类型
+        Value weightValue = rel.get("weight");
+        if (weightValue != null && !weightValue.isNull()) {
+            gEdge.setValue(weightValue.asNumber());
+        }
+
+        edgeMap.put(elementId, gEdge);
     }
 
 }
