@@ -2,89 +2,64 @@ package mcp.canary.neo4j.service;
 
 import mcp.canary.neo4j.db.Neo4jConnection;
 import org.neo4j.driver.Result;
-import org.neo4j.driver.exceptions.Neo4jException;
-import org.neo4j.driver.summary.ResultSummary;
 import org.neo4j.driver.summary.SummaryCounters;
 import org.neo4j.driver.types.MapAccessor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.regex.Pattern;
+import java.util.*;
 
 @Service
 public class Neo4jService {
-
     private static final Logger logger = LoggerFactory.getLogger(Neo4jService.class);
     private final Neo4jConnection neo4jConnection;
-
-    // 检查 Cypher 查询是否包含常见的写入子句
-    private static final Pattern WRITE_QUERY_PATTERN = Pattern.compile(
-            "\\b(MERGE|CREATE|SET|DELETE|REMOVE|ADD)\\b", Pattern.CASE_INSENSITIVE
-    );
 
     public Neo4jService(Neo4jConnection neo4jConnection) {
         this.neo4jConnection = neo4jConnection;
     }
 
-    public boolean isWriteQuery(String query) {
-        if (query == null) {
-            return false;
+    /**
+     * 执行原生 Cypher 并返回结果列表
+     */
+    public List<Map<String, Object>> execute(String query, Map<String, Object> params) {
+        try (var session = neo4jConnection.createSession()) {
+            return session.run(query, params != null ? params : Collections.emptyMap())
+                    .list(MapAccessor::asMap);
         }
-        return WRITE_QUERY_PATTERN.matcher(query).find();
     }
 
     /**
-     * 执行 Cypher 查询并将结果作为字典（Map）列表返回。
-     * 对于写入查询，返回一个包含单个计数器映射的列表。
-     * 对于读取查询，返回一个映射列表，其中每个映射代表一条记录。
-     *
-     * @param query  Cypher 查询字符串。
-     * @param params 查询的可选参数。
-     * @return 一个包含表示查询结果或写入计数器的映射列表。
-     * @throws RuntimeException 如果发生数据库错误。
+     * 自动去重逻辑：查找 name 属性重复的节点，并调用 APOC 进行深度合并。
+     * 合并规则：属性结合、关系重定向到新节点。
      */
-    public List<Map<String, Object>> executeQuery(String query, Map<String, Object> params) {
-        logger.info("正在执行查询: {}", query);
-        if (params == null) {
-            params = Collections.emptyMap();
-        }
+    public void deduplicateNodesByName() {
+        String dedupeCypher = """
+            MATCH (n)
+            WHERE n.name IS NOT NULL
+            WITH n.name AS name, collect(n) AS nodes
+            WHERE size(nodes) > 1
+            CALL apoc.refactor.mergeNodes(nodes, {properties:"combine", mergeRels:true})
+            YIELD node RETURN count(node)
+            """;
+        execute(dedupeCypher, null);
+        logger.info("Executed APOC node deduplication based on 'name' property.");
+    }
+
+    /**
+     * 执行写入操作并获取统计摘要
+     */
+    public Map<String, Object> executeWriteWithSummary(String query, Map<String, Object> params) {
         try (var session = neo4jConnection.createSession()) {
-            Result result = session.run(query, params);
+            Result result = session.run(query, params != null ? params : Collections.emptyMap());
+            SummaryCounters c = result.consume().counters();
 
-            // 对于写入查询，返回一个表示计数器的映射表。
-            if (isWriteQuery(query)) {
-                ResultSummary summary = result.consume();
-                SummaryCounters counters = summary.counters();
-                Map<String, Object> counterMap = new HashMap<>();
-                counterMap.put("nodesCreated", counters.nodesCreated());
-                counterMap.put("nodesDeleted", counters.nodesDeleted());
-                counterMap.put("relationshipsCreated", counters.relationshipsCreated());
-                counterMap.put("relationshipsDeleted", counters.relationshipsDeleted());
-                counterMap.put("propertiesSet", counters.propertiesSet());
-                counterMap.put("labelsAdded", counters.labelsAdded());
-                counterMap.put("labelsRemoved", counters.labelsRemoved());
-                counterMap.put("indexesAdded", counters.indexesAdded());
-                counterMap.put("indexesRemoved", counters.indexesRemoved());
-                counterMap.put("constraintsAdded", counters.constraintsAdded());
-                counterMap.put("constraintsRemoved", counters.constraintsRemoved());
-                counterMap.put("systemUpdates", counters.systemUpdates());
-                counterMap.put("containsSystemUpdates", counters.containsSystemUpdates());
-                counterMap.put("containsUpdates", counters.containsUpdates());
-                logger.debug("写入查询受影响: {}", counterMap);
-                return Collections.singletonList(counterMap);
-            }
-
-            List<Map<String, Object>> records = result.list(MapAccessor::asMap);
-            logger.info("读取查询返回 {} 行", records.size());
-            return records;
-        } catch (Neo4jException e) {
-            logger.error("执行查询时发生数据库错误：{}\n查询语句：{}", e.getMessage(), query, e);
-            return Collections.emptyList();
+            Map<String, Object> stats = new HashMap<>();
+            stats.put("nodesCreated", c.nodesCreated());
+            stats.put("nodesDeleted", c.nodesDeleted());
+            stats.put("relationshipsCreated", c.relationshipsCreated());
+            stats.put("propertiesSet", c.propertiesSet());
+            return stats;
         }
     }
 }

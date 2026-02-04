@@ -1,7 +1,6 @@
 package mcp.canary.echart.tool;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import io.modelcontextprotocol.server.McpSyncServerExchange;
 import io.modelcontextprotocol.spec.McpSchema.LoggingLevel;
 import io.modelcontextprotocol.spec.McpSchema.LoggingMessageNotification;
@@ -16,27 +15,18 @@ import mcp.canary.echart.module.graph.title.GraphTitle;
 import mcp.canary.echart.module.graph.series.data.GraphCategory;
 import mcp.canary.echart.module.graph.series.data.GraphEdge;
 import mcp.canary.echart.module.graph.series.data.GraphNode;
-import mcp.canary.echart.prompt.GraphEChartMCPPrompt;
 import org.springaicommunity.mcp.annotation.McpTool;
 import org.springaicommunity.mcp.annotation.McpToolParam;
-import org.springaicommunity.mcp.annotation.McpPrompt;
 import org.springframework.stereotype.Component;
 
 @Component
 public class GraphEChartMCPTool {
 
-    private static final ObjectMapper mapper = new ObjectMapper();
-
     @McpTool(
             name = "generate_graph_chart",
             description = "生成 ECharts Graph 图的 option JSON。"
     )
-    @McpPrompt(
-            name = "graph-option-prompt",
-            title = "生成 ECharts Graph Option JSON",
-            description = GraphEChartMCPPrompt.GRAPH_OPTION_PROMPT
-    )
-    public String generateGraphOption(
+    public JsonNode generateGraphOption(
             @McpToolParam(description = "图表标题，可为空") String title,
             @McpToolParam(description = "布局类型：force 或 circular，缺省为 force") String layout,
             @McpToolParam(description = "节点列表，name 必须唯一") List<GraphNode> nodes,
@@ -62,10 +52,8 @@ public class GraphEChartMCPTool {
             graphOption.setSeries(series);
 
             JsonNode resultNode = graphOption.toEChartNode();
-            String jsonStr = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(resultNode);
-
             sendLog(exchange, LoggingLevel.INFO, "ECharts option JSON 生成完成");
-            return jsonStr;
+            return resultNode;
         } catch (Exception e) {
             sendLog(exchange, LoggingLevel.ERROR, "生成 ECharts option 失败: " + e.getMessage());
             throw new RuntimeException(e);
