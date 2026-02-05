@@ -1,4 +1,5 @@
 import { ZhipuAIClient } from "@/lib/llm/zhipu-ai";
+import type { ZhipuChatRequest } from "@/lib/llm/zhipu-ai";
 import { McpManager } from "@/lib/mcp/manager";
 import {McpChatService} from "@/lib/chat/chat";
 
@@ -9,8 +10,14 @@ const mcp = new McpManager({
 });
 
 export async function POST(req: Request) {
-    const { messages } = await req.json();
+    const { messages, deepThinking } = await req.json();
     const service = new McpChatService(zhipu, mcp);
+    const thinking: ZhipuChatRequest["thinking"] | undefined =
+        typeof deepThinking === "boolean"
+            ? deepThinking
+                ? { type: "enabled", clear_thinking: true }
+                : { type: "disabled" }
+            : undefined;
 
     return new Response(new ReadableStream({
         async start(controller) {
@@ -20,7 +27,7 @@ export async function POST(req: Request) {
             };
 
             try {
-                await service.chatRecursive(messages, send);
+                await service.chatRecursive(messages, send, thinking);
             } catch (err: any) {
                 send("error", err.message);
             } finally {

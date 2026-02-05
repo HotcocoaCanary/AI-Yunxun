@@ -2,12 +2,14 @@
 
 import {forwardRef, useEffect, useImperativeHandle, useRef, useState} from "react";
 import {ToolBox} from "@/components/tool-box";
+import {ThoughtBox} from "@/components/thought-box";
 import {Message, ToolInvocation} from "@/types/chat";
 
 export interface ChatMessageHandle {
     addUserMessage: (content: string) => void;
     startAssistantMessage: () => void;
     appendAssistantText: (content: string) => void;
+    setThinking: (content: string) => void;
     addToolUse: (tool: ToolInvocation) => void;
     addToolResult: (callId: string, result: string, uiType?: string) => void;
     addError: (message: string) => void;
@@ -42,6 +44,18 @@ export const ChatMessage = forwardRef<ChatMessageHandle>(function ChatMessage(_p
                 const newMsgs = [...prev];
                 const last = {...newMsgs[newMsgs.length - 1]};
                 last.content += content;
+                newMsgs[newMsgs.length - 1] = last;
+                return newMsgs;
+            });
+        },
+        setThinking: (content) => {
+            if (!content) return;
+            syncMessages(prev => {
+                if (prev.length === 0) return prev;
+                const newMsgs = [...prev];
+                const last = {...newMsgs[newMsgs.length - 1]};
+                const existing = last.thinking ?? "";
+                last.thinking = existing ? existing + content : content;
                 newMsgs[newMsgs.length - 1] = last;
                 return newMsgs;
             });
@@ -113,10 +127,12 @@ export const ChatMessage = forwardRef<ChatMessageHandle>(function ChatMessage(_p
                                     {message.content || "..."}
                                 </div>
 
-                                {/* 工具卡片 */}
-                                {message.role === 'assistant' && message.tools && message.tools.length > 0 && (
+                                {message.role === 'assistant' && (message.thinking?.trim() || (message.tools && message.tools.length > 0)) && (
                                     <div className="mt-6 pt-6 border-t border-gray-100 space-y-4">
-                                        {message.tools.map((tool, tIdx) => (
+                                        {message.thinking?.trim() && (
+                                            <ThoughtBox content={message.thinking} />
+                                        )}
+                                        {message.tools?.map((tool, tIdx) => (
                                             <ToolBox key={tool.callId || tIdx} tool={tool} />
                                         ))}
                                     </div>

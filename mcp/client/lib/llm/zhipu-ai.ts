@@ -47,6 +47,7 @@ export interface ZhipuChatChunk {
         delta: {
             role?: "assistant";
             content?: string;
+            reasoning_content?: string;
             tool_calls?: ZhipuToolCall[];
         };
         finish_reason: string | null;

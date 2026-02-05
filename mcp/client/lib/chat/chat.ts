@@ -1,5 +1,8 @@
 import {ZhipuAIClient, ZhipuChatResponse, ZhipuMessage} from "@/lib/llm/zhipu-ai";
+import type { ZhipuChatRequest } from "@/lib/llm/zhipu-ai";
 import {McpManager} from "@/lib/mcp/manager";
+
+type ThinkingConfig = ZhipuChatRequest["thinking"];
 
 
 export class McpChatService {
@@ -10,16 +13,18 @@ export class McpChatService {
 
     async chatRecursive(
         messages: ZhipuMessage[],
-        onEvent: (type: string, data: any) => void
+        onEvent: (type: string, data: any) => void,
+        thinking?: ThinkingConfig
     ) {
         await this.mcp.init();
         const tools = await this.mcp.getToolsForLLM();
         let currentMessages = [...messages];
         let keepLooping = true;
+        const thinkingEnabled = thinking?.type !== "disabled";
 
         while (keepLooping) {
             // 1. 询问智谱
-            const res = await this.zhipu.chat({ messages: currentMessages, tools, stream: false });
+            const res = await this.zhipu.chat({ messages: currentMessages, tools, stream: false, thinking });
             const data = (await res.json()) as ZhipuChatResponse;
 
             if (data.error) throw new Error(data.error.message);
@@ -77,38 +82,74 @@ export class McpChatService {
                 }
             } else {
                 // 3. 任务收尾：流式输出最终回复
-                if (!aiMsg?.content) {
-                    const finalStream = await this.zhipu.chat({ messages: currentMessages, stream: true });
-                    await this.pumpStream(finalStream, onEvent);
-                } else {
+                let reasoningContent = "";
+                let streamed = false;
+
+                try {
+                    const finalStream = await this.zhipu.chat({ messages: currentMessages, tools, stream: true, thinking });
+                    const result = await this.pumpStream(finalStream, onEvent);
+                    reasoningContent = result.reasoning;
+                    streamed = true;
+                } catch (e) {
+                    console.warn("Streaming response failed, fallback to non-stream.", e);
+                }
+
+                if (!streamed && aiMsg?.content) {
                     onEvent("text", aiMsg.content);
+                }
+
+                if (thinkingEnabled) {
+                    const finalReasoning = reasoningContent || aiMsg?.reasoning_content || "";
+                    if (finalReasoning) {
+                        onEvent("thinking", {
+                            callId: "thinking",
+                            name: "\u601D\u7EF4\u94FE",
+                            content: finalReasoning,
+                            ui_type: "text"
+                        });
+                    }
                 }
                 keepLooping = false;
             }
         }
     }
 
-    private async pumpStream(response: Response, onEvent: (type: string, data: any) => void) {
+    private async pumpStream(
+        response: Response,
+        onEvent: (type: string, data: any) => void
+    ): Promise<{ reasoning: string }> {
         const reader = response.body?.getReader();
         const decoder = new TextDecoder();
-        if (!reader) return;
+        if (!reader) return { reasoning: "" };
+
+        let buffer = "";
+        let reasoning = "";
 
         while (true) {
             const { done, value } = await reader.read();
             if (done) break;
-            const chunk = decoder.decode(value);
-            const lines = chunk.split('\n');
-            for (const line of lines) {
-                if (line.startsWith('data: ')) {
+            buffer += decoder.decode(value, { stream: true });
+            let lineEnd = buffer.indexOf("\n");
+            while (lineEnd >= 0) {
+                let line = buffer.slice(0, lineEnd);
+                buffer = buffer.slice(lineEnd + 1);
+                if (line.endsWith("\r")) line = line.slice(0, -1);
+                if (line.startsWith("data: ")) {
                     const dataStr = line.slice(6).trim();
-                    if (dataStr === '[DONE]') break;
+                    if (dataStr === "[DONE]") break;
                     try {
                         const json = JSON.parse(dataStr);
-                        const content = json.choices[0].delta?.content;
+                        const delta = json.choices?.[0]?.delta;
+                        const content = delta?.content;
+                        const reasoningDelta = delta?.reasoning_content;
                         if (content) onEvent("text", content);
+                        if (reasoningDelta) reasoning += reasoningDelta;
                     } catch (e) {}
                 }
+                lineEnd = buffer.indexOf("\n");
             }
         }
+
+        return { reasoning };
     }
 }
