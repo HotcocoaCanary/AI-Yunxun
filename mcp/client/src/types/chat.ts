@@ -3,6 +3,7 @@ export interface Message {
     content: string;
     tools?: ToolInvocation[]; // 存放该条消息关联的工具调用
     thinking?: string;
+    status?: string;
 }
 
 export interface ToolInvocation {

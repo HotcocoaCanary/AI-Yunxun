@@ -7,7 +7,7 @@ export class McpClient {
     private readonly transport: SSEClientTransport;
 
     constructor(private label: string, private url: string) {
-        this.transport = new SSEClientTransport(new URL(`${this.url}/sse`));
+        this.transport = new SSEClientTransport(new URL(`${this.url}`));
         this.client = new Client(
             { name: `client-${this.label}`, version: "1.0.0" },
             { capabilities: {} }
