@@ -11,7 +11,7 @@ export interface ChatMessageHandle {
     appendAssistantText: (content: string) => void;
     setThinking: (content: string) => void;
     addToolUse: (tool: ToolInvocation) => void;
-    addToolResult: (callId: string, result: string, uiType?: string) => void;
+    addToolResult: (callId: string, result: string) => void;
     addError: (message: string) => void;
     getMessages: () => Message[];
 }
@@ -70,13 +70,13 @@ export const ChatMessage = forwardRef<ChatMessageHandle>(function ChatMessage(_p
                 return newMsgs;
             });
         },
-        addToolResult: (callId, result, uiType) => {
+        addToolResult: (callId, result) => {
             syncMessages(prev => {
                 if (prev.length === 0) return prev;
                 const newMsgs = [...prev];
                 const last = {...newMsgs[newMsgs.length - 1]};
                 last.tools = last.tools?.map(t =>
-                    t.callId === callId ? {...t, result, ui_type: uiType, status: "done"} : t
+                    t.callId === callId ? {...t, result, status: "done"} : t
                 );
                 newMsgs[newMsgs.length - 1] = last;
                 return newMsgs;
@@ -97,38 +97,38 @@ export const ChatMessage = forwardRef<ChatMessageHandle>(function ChatMessage(_p
 
     // 只展示渲染部分的修改点，逻辑保持不变
     return (
-        <div className="space-y-10 py-10 px-4">
+        <div className="space-y-8 py-10 px-4">
             {messages.map((message, idx) => (
                 /* 注意这里：我加了 key={idx} */
                 <div
                     key={`msg-${idx}`}
-                    className={`flex w-full mb-10 animate-slide-up ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                    className={`flex w-full mb-6 animate-slide-up ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
                 >
-                    <div className={`group relative max-w-[85%] ${message.role === 'user' ? 'order-1' : 'order-2'}`}>
+                    <div className={`group relative max-w-[80%] ${message.role === 'user' ? 'order-1' : 'order-2'}`}>
 
                         {/* 用户消息：深色高级感 */}
                         {message.role === 'user' ? (
-                            <div className="bg-[#18181b] text-white px-5 py-3 rounded-[22px] rounded-br-none shadow-lg text-[15px] leading-relaxed">
+                            <div className="bg-gradient-to-br from-[#111113] to-[#1f1f24] text-white px-5 py-3 rounded-[20px] rounded-br-none shadow-lg text-[15px] leading-relaxed ring-1 ring-gray-800">
                                 {message.content}
                             </div>
                         ) : (
                             /* AI 消息：卡片感 */
-                            <div className="bg-white border border-gray-200/80 shadow-premium p-6 rounded-[24px] rounded-bl-none">
-                                <div className="flex items-center gap-2 mb-4">
+                            <div className="bg-white border border-gray-200/80 shadow-premium p-6 rounded-[22px] rounded-bl-none transition-shadow hover:shadow-[0_10px_35px_rgba(0,0,0,0.06)]">
+                                <div className="flex items-center gap-2 mb-3">
                                     <div className="w-6 h-6 bg-blue-100 rounded-lg flex items-center justify-center">
                                         <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
                                         </svg>
                                     </div>
-                                    <span className="text-[11px] font-bold text-gray-400 uppercase tracking-tight">Assistant Response</span>
+                                    <span className="text-[11px] font-semibold text-gray-500 tracking-tight">助理回复</span>
                                 </div>
 
-                                <div className="text-[#3f3f46] text-[15px] leading-[1.7] space-y-4">
+                                <div className="text-[#3f3f46] text-[15px] leading-[1.8] space-y-4">
                                     {message.content || "..."}
                                 </div>
 
                                 {message.role === 'assistant' && (message.thinking?.trim() || (message.tools && message.tools.length > 0)) && (
-                                    <div className="mt-6 pt-6 border-t border-gray-100 space-y-4">
+                                    <div className="mt-5 pt-5 border-t border-gray-100 space-y-4">
                                         {message.thinking?.trim() && (
                                             <ThoughtBox content={message.thinking} />
                                         )}

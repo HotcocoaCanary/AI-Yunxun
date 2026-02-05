@@ -7,14 +7,14 @@ export function ThoughtBox({ content }: { content: string }) {
     if (!content) return null;
 
     return (
-        <div className="rounded-2xl border border-gray-100 bg-gray-50/50 overflow-hidden transition-all duration-300 hover:border-blue-200">
+        <div className="rounded-2xl border border-gray-100 bg-gray-50/70 overflow-hidden transition-all duration-300 hover:border-blue-200">
             <button
                 type="button"
                 onClick={() => setIsExpanded(!isExpanded)}
-                className="w-full flex items-center justify-between p-4 hover:bg-gray-100/50 transition-colors"
+                className="w-full flex items-center justify-between p-4 hover:bg-gray-100/60 transition-colors"
             >
                 <div className="flex items-center gap-3">
-                    <div className={`flex items-center justify-center w-8 h-8 rounded-full ${isExpanded ? "bg-blue-100 text-blue-600" : "bg-gray-100 text-gray-500"}`}>
+                    <div className={`flex items-center justify-center w-8 h-8 rounded-full ${isExpanded ? "bg-blue-100 text-blue-600 ring-1 ring-blue-200" : "bg-gray-100 text-gray-500 ring-1 ring-gray-200"}`}>
                         T
                     </div>
                     <div className="text-left">
@@ -23,7 +23,7 @@ export function ThoughtBox({ content }: { content: string }) {
                     </div>
                 </div>
                 <div className="text-xs text-blue-500 font-medium">
-                    {isExpanded ? "Hide Details" : "View Details"}
+                    {isExpanded ? "收起详情" : "展开详情"}
                 </div>
             </button>
 

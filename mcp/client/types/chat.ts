@@ -10,6 +10,5 @@ export interface ToolInvocation {
     name: string;
     args: any;
     result?: any;
-    ui_type?: string;
     status: 'running' | 'done' | 'error';
 }

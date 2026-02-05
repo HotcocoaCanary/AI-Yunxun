@@ -47,7 +47,7 @@ export function ChatInput({messageRef}: { messageRef: RefObject<ChatMessageHandl
                         status: "running"
                     });
                 } else if (type === "tool_result") {
-                    messageRef.current?.addToolResult(data.callId, data.result, data.ui_type);
+                    messageRef.current?.addToolResult(data.callId, data.result);
                 } else if (type === "thinking") {
                     const payload = typeof data === "string" ? {content: data} : (data ?? {});
                     const content = payload.content ?? "";
@@ -96,11 +96,11 @@ export function ChatInput({messageRef}: { messageRef: RefObject<ChatMessageHandl
         <div className="relative group">
             <div
                 className="relative bg-white border border-gray-200 rounded-[24px] shadow-[0_8px_30px_rgb(0,0,0,0.04)] focus-within:shadow-[0_8px_30px_rgb(0,0,0,0.08)] focus-within:border-gray-300 transition-all duration-300">
-                <div className="flex items-end gap-2 p-2">
+                <div className="grid grid-cols-[1fr_auto] items-end gap-2 p-2">
                     <textarea
                         rows={1}
-                        className="flex-1 max-h-40 bg-transparent border-none px-4 py-3 focus:outline-none text-[15px] text-gray-800 placeholder-gray-400 resize-none"
-                        placeholder="\u8F93\u5165\u6307\u4EE4\uFF0C\u63A2\u7D22\u56FE\u8C31..."
+                        className="w-full max-h-40 bg-transparent border-none px-4 py-3 focus:outline-none text-[15px] text-gray-800 placeholder-gray-400 resize-none"
+                        placeholder="输入指令，按 Enter 发送，Shift+Enter 换行"
                         value={input}
                         onChange={(e) => {
                             setInput(e.target.value);
@@ -118,10 +118,10 @@ export function ChatInput({messageRef}: { messageRef: RefObject<ChatMessageHandl
                     <button
                         onClick={handleSubmit}
                         disabled={isTyping || !input.trim()}
-                        className={`p-3 rounded-full transition-all duration-200 ${
+                        className={`p-3 rounded-full transition-all duration-200 ring-1 flex-shrink-0 min-w-[44px] min-h-[44px] ${
                             isTyping || !input.trim()
-                                ? 'bg-gray-50 text-gray-300'
-                                : 'bg-black text-white hover:bg-gray-800 shadow-md'
+                                ? 'bg-gray-50 text-gray-300 ring-gray-200'
+                                : 'bg-black text-white hover:bg-gray-800 shadow-md ring-black/20'
                         }`}
                     >
                         {isTyping ? <LoadingIcon/> : <SendIcon/>}
@@ -137,22 +137,22 @@ export function ChatInput({messageRef}: { messageRef: RefObject<ChatMessageHandl
                                 deepThinking ? 'bg-black' : 'bg-gray-200'
                             } ${isTyping ? 'opacity-50 cursor-not-allowed' : ''}`}
                             aria-pressed={deepThinking}
-                            aria-label="\u6DF1\u5EA6\u601D\u8003"
+                            aria-label="深度思考"
                         >
                             <span
                                 className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
                                     deepThinking ? 'translate-x-4' : 'translate-x-1'
                                 }`}/>
                         </button>
-                        <span className="text-[11px] font-medium text-gray-500">\u6DF1\u5EA6\u601D\u8003</span>
+                        <span className="text-[11px] font-medium text-gray-500">深度思考</span>
                     </div>
                     <span className={`text-[11px] font-semibold ${deepThinking ? "text-green-600" : "text-gray-400"}`}>
-                        {deepThinking ? "\u5F00\u542F" : "\u5173\u95ED"}
+                        {deepThinking ? "开启" : "关闭"}
                     </span>
                 </div>
             </div>
-            <p className="text-[11px] text-center text-gray-400 mt-3 tracking-wide">
-                Shift + Enter \u6362\u884C \u00B7 McpGraph Agent V1.0
+            <p className="text-[11px] text-center text-gray-500 mt-3 tracking-wide">
+                Enter 发送 · Shift+Enter 换行 · 深度思考可提升分析质量
             </p>
         </div>
     );

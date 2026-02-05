@@ -52,25 +52,10 @@ export class McpChatService {
                     });
 
                     const toolResult = await this.mcp.callTool(call.function.name, JSON.parse(call.function.arguments));
-
-                    // --- 核心拦截逻辑 ---
-                    let displayMetadata = { type: "text" };
-
-                    // 逻辑：如果是 echart 前缀且返回的是合法的 JSON
-                    if (toolName.startsWith("echart")) {
-                        try {
-                            JSON.parse(toolResult); // 验证是否为合法 JSON
-                            displayMetadata.type = "echart";
-                        } catch (e) {
-                            console.warn("EChart 工具返回了非 JSON 格式");
-                        }
-                    }
-
                     onEvent("tool_result", {
                         name: call.function.name,
                         result: toolResult,
-                        callId: call.id,
-                        ui_type: displayMetadata.type
+                        callId: call.id
                     });
 
                     // 回填工具结果

@@ -2,12 +2,13 @@
 
 import React, { useEffect, useRef } from 'react';
 import * as echarts from 'echarts';
+import type { EChartsOption } from 'echarts';
 
 interface EChartGraphProps {
-    config: string; // 接收 JSON 字符串
+    option: EChartsOption;
 }
 
-export const EChartGraph: React.FC<EChartGraphProps> = ({ config }) => {
+export const EChartGraph: React.FC<EChartGraphProps> = ({ option }) => {
     const chartRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
@@ -15,13 +16,7 @@ export const EChartGraph: React.FC<EChartGraphProps> = ({ config }) => {
 
         // 初始化图表
         const chartInstance = echarts.init(chartRef.current);
-
-        try {
-            const option = JSON.parse(config);
-            chartInstance.setOption(option);
-        } catch (error) {
-            console.error("EChart 配置解析失败:", error);
-        }
+        chartInstance.setOption(option);
 
         // 响应式处理
         const handleResize = () => chartInstance.resize();
@@ -31,7 +26,7 @@ export const EChartGraph: React.FC<EChartGraphProps> = ({ config }) => {
             window.removeEventListener('resize', handleResize);
             chartInstance.dispose();
         };
-    }, [config]);
+    }, [option]);
 
     return (
         <div className="w-full my-4 border rounded-xl bg-white p-4 shadow-sm">
