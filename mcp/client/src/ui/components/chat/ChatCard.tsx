@@ -205,19 +205,30 @@ export function ChatCard() {
     }
   };
 
+  const isEmpty = messages.length === 0;
+
   return (
-    <div>
-      <div>
-        {messages.map((message, index) =>
-          message.role === "user" ? (
-            <UserMessageCard key={`msg-${index}`} message={message} />
-          ) : (
-            <AssistantMessageCard key={`msg-${index}`} message={message} />
+    <section className="chat-shell">
+      <div className="chat-stream">
+        {isEmpty ? (
+          <div className="chat-empty">
+            <div className="chat-empty-title">Start a new conversation</div>
+            <div className="chat-empty-subtitle">
+              Ask a question, run a tool, or explore ideas with MCP.
+            </div>
+          </div>
+        ) : (
+          messages.map((message, index) =>
+            message.role === "user" ? (
+              <UserMessageCard key={`msg-${index}`} message={message} />
+            ) : (
+              <AssistantMessageCard key={`msg-${index}`} message={message} />
+            )
           )
         )}
         <div ref={scrollRef} />
       </div>
       <UserInputCard isTyping={isTyping} onSubmit={handleSubmit} />
-    </div>
+    </section>
   );
 }

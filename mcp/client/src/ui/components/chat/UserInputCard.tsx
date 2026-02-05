@@ -25,24 +25,32 @@ export function UserInputCard({
   };
 
   return (
-    <div>
-      <div>
+    <div className="chat-composer">
+      <div className="composer-actions">
         <button
           type="button"
+          className="toggle-btn"
+          data-active={deepThinking}
+          aria-pressed={deepThinking}
           onClick={() => setDeepThinking((prev) => !prev)}
         >
-          thought: {deepThinking ? "on" : "off"}
+          Deep thinking {deepThinking ? "on" : "off"}
         </button>
         <button
           type="button"
+          className="toggle-btn"
+          data-active={webSearch}
+          aria-pressed={webSearch}
           onClick={() => setWebSearch((prev) => !prev)}
         >
-          web-search: {webSearch ? "on" : "off"}
+          Web search {webSearch ? "on" : "off"}
         </button>
       </div>
       <textarea
         rows={1}
+        className="composer-input"
         value={input}
+        placeholder="Type a message and press Enter to send..."
         onChange={(e) => {
           setInput(e.target.value);
           e.target.style.height = "auto";
@@ -56,9 +64,16 @@ export function UserInputCard({
         }}
         disabled={isTyping}
       />
-      <button onClick={handleSubmit} disabled={isTyping || !input.trim()}>
-        Send
-      </button>
+      <div className="composer-footer">
+        <div className="composer-hint">Shift + Enter for a new line</div>
+        <button
+          className="btn btn-primary"
+          onClick={handleSubmit}
+          disabled={isTyping || !input.trim()}
+        >
+          Send
+        </button>
+      </div>
     </div>
   );
 }

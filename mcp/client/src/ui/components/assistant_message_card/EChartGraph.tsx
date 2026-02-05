@@ -26,5 +26,5 @@ export const EChartGraph = ({ option }: EChartGraphProps) => {
     };
   }, [option]);
 
-  return <div ref={chartRef} style={{ width: "100%", height: "400px" }} />;
+  return <div ref={chartRef} className="chart-frame" />;
 };

@@ -6,11 +6,15 @@ import type { Message } from "@/types/chat";
 
 export function AssistantMessageCard({ message }: { message: Message }) {
   return (
-    <div>
-      <div>assistant</div>
-      {message.status && <div>{message.status}</div>}
+    <div className="message message--assistant">
+      <div className="message-meta">
+        <span>Assistant</span>
+        {message.status && (
+          <span className="message-status">{message.status}</span>
+        )}
+      </div>
       {message.content && (
-        <div style={{ whiteSpace: "pre-wrap" }}>{message.content}</div>
+        <div className="message-content">{message.content}</div>
       )}
       {message.thinking?.trim() && <ThoughtCard content={message.thinking} />}
       {message.tools?.map((tool, index) => (
