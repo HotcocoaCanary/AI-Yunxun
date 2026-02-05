@@ -1,5 +1,5 @@
-import ChatRoot from "@/components/chat-root";
+import { ChatCard } from "@/ui/components/chat/ChatCard";
 
 export default function ChatPage() {
-  return <ChatRoot />;
+  return <ChatCard />;
 }

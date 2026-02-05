@@ -1,3 +1,4 @@
+//infra/mcp/client.ts
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { SSEClientTransport } from "@modelcontextprotocol/sdk/client/sse.js";
 import { CallToolResult, ListToolsResult } from "@modelcontextprotocol/sdk/types.js";

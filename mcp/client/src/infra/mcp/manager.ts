@@ -1,3 +1,4 @@
+//infra/mcp/manager.ts
 import { McpClient } from "./client";
 
 export class McpManager {
