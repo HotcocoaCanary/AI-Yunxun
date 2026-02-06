@@ -49,6 +49,7 @@ body.app-body {
       transparent 55%
     ),
     linear-gradient(180deg, #faf8f5 0%, #f0ebe6 100%);
+  overflow: hidden;
 }
 
 button,
@@ -57,24 +58,27 @@ textarea {
 }
 
 .app {
-  min-height: 100vh;
+  height: 100vh;
   display: flex;
   align-items: stretch;
   justify-content: center;
   padding: var(--gutter);
+  overflow: hidden;
 }
 
 .app-shell {
   width: min(100%, var(--content-width));
+  height: 100%;
   display: grid;
+  grid-template-columns: minmax(220px, 280px) minmax(0, 1fr);
   gap: 22px;
 }
 
-.app-header {
+.sidebar {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 20px 24px;
+  flex-direction: column;
+  gap: 20px;
+  padding: 24px;
   background: rgba(255, 255, 255, 0.75);
   border: 1px solid var(--border);
   border-radius: var(--radius-l);
@@ -96,6 +100,24 @@ textarea {
 .brand-subtitle {
   font-size: 14px;
   color: var(--text-muted);
+}
+
+.sidebar-meta {
+  margin-top: auto;
+  display: grid;
+  gap: 10px;
+}
+
+.sidebar-caption {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.app-content {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
 }
 
 .status-pill {
@@ -127,7 +149,8 @@ textarea {
   border-radius: var(--radius-xl);
   overflow: hidden;
   box-shadow: var(--shadow);
-  min-height: 560px;
+  min-height: 0;
+  flex: 1;
 }
 
 .chat-stream {
@@ -136,6 +159,7 @@ textarea {
   gap: 18px;
   padding: clamp(18px, 3vw, 32px);
   flex: 1;
+  min-height: 0;
   overflow-y: auto;
   background: linear-gradient(
     180deg,
@@ -416,10 +440,8 @@ textarea {
 }
 
 @media (max-width: 720px) {
-  .app-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 12px;
+  .app-shell {
+    grid-template-columns: 1fr;
   }
 
   .message {
