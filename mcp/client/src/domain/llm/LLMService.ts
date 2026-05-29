@@ -1,4 +1,4 @@
-import {ZhipuAIClient, type ZhipuChatRequest} from "@/infra/zhipu/zhipu-ai";
+import {DeepSeekClient, type DeepSeekChatParams} from "@/infra/llm/deepseek";
 
 export interface LLMToolCall {
     id: string;
@@ -21,22 +21,22 @@ type ToolCallDelta = {
 
 type LLMChatResult = {
     assistantContent: string;
+    reasoningContent: string;
     toolCalls: LLMToolCall[];
     finishReason: string | null;
 };
 
 export class LLMService {
-    constructor(private client: ZhipuAIClient) {
+    constructor(private client: DeepSeekClient) {
     }
 
-    async chat(params: ZhipuChatRequest & {
-        onEvent?: (type: string, data: any) => void;
+    async chat(params: DeepSeekChatParams & {
+        onEvent?: (type: string, data: unknown) => void;
     }): Promise<LLMChatResult> {
         const response = await this.client.chat({
             messages: params.messages,
             tools: params.tools,
-            thinking: params.thinking,
-            web_search: params.web_search
+            thinking: params.thinking
         });
 
         const reader = response.body?.getReader();
@@ -49,14 +49,14 @@ export class LLMService {
 
     private async readNonStream(
         response: Response,
-        onEvent?: (type: string, data: any) => void,
+        onEvent?: (type: string, data: unknown) => void,
         thinking?: boolean
     ): Promise<LLMChatResult> {
-        const data = await response.json();
-        const message = data?.choices?.[0]?.message;
-        const finishReason = data?.choices?.[0]?.finish_reason ?? null;
-        const content = message?.content ?? "";
-        const reasoning = message?.reasoning_content ?? "";
+        const data = await response.json() as Record<string, unknown>;
+        const message = (data?.choices as Array<Record<string, unknown>>)?.[0]?.message as Record<string, unknown> | undefined;
+        const finishReason = ((data?.choices as Array<Record<string, unknown>>)?.[0]?.finish_reason ?? null) as string | null;
+        const content = (message?.content ?? "") as string;
+        const reasoning = (message?.reasoning_content ?? "") as string;
         const toolCalls = (message?.tool_calls ?? []) as LLMToolCall[];
 
         if (content) onEvent?.("text", content);
@@ -71,6 +71,7 @@ export class LLMService {
 
         return {
             assistantContent: content,
+            reasoningContent: reasoning,
             toolCalls,
             finishReason
         };
@@ -78,7 +79,7 @@ export class LLMService {
 
     private async readStream(
         reader: ReadableStreamDefaultReader<Uint8Array>,
-        onEvent?: (type: string, data: any) => void,
+        onEvent?: (type: string, data: unknown) => void,
         thinking?: boolean
     ): Promise<LLMChatResult> {
         const decoder = new TextDecoder();
@@ -101,18 +102,18 @@ export class LLMService {
                     const dataStr = line.slice(6).trim();
                     if (dataStr === "[DONE]") break;
                     try {
-                        const json = JSON.parse(dataStr);
-                        const choice = json?.choices?.[0];
-                        const delta = choice?.delta;
-                        if (choice?.finish_reason) finishReason = choice.finish_reason;
+                        const json = JSON.parse(dataStr) as Record<string, unknown>;
+                        const choice = (json?.choices as Array<Record<string, unknown>>)?.[0];
+                        const delta = choice?.delta as Record<string, unknown> | undefined;
+                        if (choice?.finish_reason) finishReason = choice.finish_reason as string;
 
-                        const content = delta?.content;
+                        const content = delta?.content as string | undefined;
                         if (content) {
                             assistantContent += content;
                             onEvent?.("text", content);
                         }
 
-                        const reasoningDelta = delta?.reasoning_content;
+                        const reasoningDelta = delta?.reasoning_content as string | undefined;
                         if (reasoningDelta) {
                             reasoningContent += reasoningDelta;
                             if (thinking) {
@@ -125,8 +126,9 @@ export class LLMService {
                             }
                         }
 
-                        if (delta?.tool_calls) {
-                            this.mergeToolCalls(toolCalls, delta.tool_calls as ToolCallDelta[]);
+                        const toolCallDeltas = delta?.tool_calls as ToolCallDelta[] | undefined;
+                        if (toolCallDeltas) {
+                            this.mergeToolCalls(toolCalls, toolCallDeltas);
                         }
                     } catch {
                     }
@@ -137,6 +139,7 @@ export class LLMService {
 
         return {
             assistantContent,
+            reasoningContent,
             toolCalls,
             finishReason
         };

@@ -4,24 +4,22 @@ import { useState } from "react";
 
 export function UserInputCard({
   isTyping,
-  onSubmit
+  onSubmit,
 }: {
   isTyping: boolean;
   onSubmit: (payload: {
     text: string;
     deepThinking: boolean;
-    webSearch: boolean;
   }) => void;
 }) {
   const [input, setInput] = useState("");
   const [deepThinking, setDeepThinking] = useState(true);
-  const [webSearch, setWebSearch] = useState(false);
 
   const handleSubmit = () => {
     if (!input.trim() || isTyping) return;
     const text = input;
     setInput("");
-    onSubmit({ text, deepThinking, webSearch });
+    onSubmit({ text, deepThinking });
   };
 
   return (
@@ -34,23 +32,14 @@ export function UserInputCard({
           aria-pressed={deepThinking}
           onClick={() => setDeepThinking((prev) => !prev)}
         >
-          Deep thinking {deepThinking ? "on" : "off"}
-        </button>
-        <button
-          type="button"
-          className="toggle-btn"
-          data-active={webSearch}
-          aria-pressed={webSearch}
-          onClick={() => setWebSearch((prev) => !prev)}
-        >
-          Web search {webSearch ? "on" : "off"}
+          {deepThinking ? "🧠 深度思考已开启" : "深度思考已关闭"}
         </button>
       </div>
       <textarea
         rows={1}
         className="composer-input"
         value={input}
-        placeholder="Type a message and press Enter to send..."
+        placeholder="输入消息，按 Enter 发送..."
         onChange={(e) => {
           setInput(e.target.value);
           e.target.style.height = "auto";
@@ -65,13 +54,20 @@ export function UserInputCard({
         disabled={isTyping}
       />
       <div className="composer-footer">
-        <div className="composer-hint">Shift + Enter for a new line</div>
+        <div className="composer-hint">Shift + Enter 换行</div>
         <button
           className="btn btn-primary"
           onClick={handleSubmit}
           disabled={isTyping || !input.trim()}
         >
-          Send
+          {isTyping ? (
+            <>
+              <span className="spinner" />
+              发送中
+            </>
+          ) : (
+            "发送"
+          )}
         </button>
       </div>
     </div>

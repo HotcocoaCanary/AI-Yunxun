@@ -8,13 +8,13 @@ export class ServerChatService {
   ) {}
 
   async chatRecursive(
-    messages: any[],
-    onEvent: (type: string, data: any) => void,
-    options?: { thinking?: boolean; webSearch?: boolean }
+    messages: Array<Record<string, unknown>>,
+    onEvent: (type: string, data: unknown) => void,
+    options?: { thinking?: boolean }
   ) {
     await this.mcp.init();
     const tools = await this.mcp.getToolsForLLM();
-    let currentMessages = [...messages];
+    const currentMessages = [...messages];
     let keepLooping = true;
 
     while (keepLooping) {
@@ -22,7 +22,6 @@ export class ServerChatService {
         messages: currentMessages,
         tools,
         thinking: options?.thinking ?? false,
-        web_search: options?.webSearch ?? false,
         onEvent
       });
 
@@ -30,11 +29,17 @@ export class ServerChatService {
         && (result.finishReason === "tool_calls" || result.finishReason === null);
 
       if (shouldCallTools) {
-        currentMessages.push({
+        const assistantMsg: Record<string, unknown> = {
           role: "assistant",
-          content: result.assistantContent || "",
-          tool_calls: result.toolCalls
-        });
+          content: result.assistantContent || ""
+        };
+        if (result.reasoningContent) {
+          assistantMsg.reasoning_content = result.reasoningContent;
+        }
+        if (result.toolCalls.length > 0) {
+          assistantMsg.tool_calls = result.toolCalls;
+        }
+        currentMessages.push(assistantMsg);
 
         await this.handleToolCalls(result.toolCalls, currentMessages, onEvent);
       } else {
@@ -45,8 +50,8 @@ export class ServerChatService {
 
   private async handleToolCalls(
     toolCalls: LLMToolCall[],
-    currentMessages: any[],
-    onEvent: (type: string, data: any) => void
+    currentMessages: Array<Record<string, unknown>>,
+    onEvent: (type: string, data: unknown) => void
   ) {
     for (const call of toolCalls) {
       const args = this.safeParseArgs(call.function.arguments);

@@ -15,8 +15,12 @@ export function ThoughtCard({ content }: { content: string }) {
         aria-expanded={open}
         onClick={() => setOpen((prev) => !prev)}
       >
-        <span className="subcard-title">Thought</span>
-        <span className="subcard-state">{open ? "Hide" : "Show"}</span>
+        <span className="subcard-chevron">{open ? "▼" : "▶"}</span>
+        <span className="subcard-title">
+          <span className="subcard-title-dot" />
+          思考过程
+        </span>
+        <span className="subcard-state">{open ? "收起" : "展开"}</span>
       </button>
       {open && (
         <div className="subcard-body">
