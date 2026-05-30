@@ -11,29 +11,54 @@ import java.util.List;
 @Data
 public class GraphCategory implements EChartModule {
 
+    private static final List<String> SYMBOL_LIST = Arrays.asList(
+            "circle", "rect", "roundRect", "triangle", "diamond", "pin", "arrow", "none"
+    );
+
+    private static final List<String> CATEGORY_COLORS = Arrays.asList(
+            "#4f46e5", "#06b6d4", "#10b981", "#f59e0b", "#ef4444",
+            "#8b5cf6", "#ec4899", "#14b8a6", "#f97316", "#3b82f6"
+    );
+
     /**
-     * 类目名称，用于和 legend 对应以及格式化 tooltip 的内容。
+     * 类目名称
      */
     private String name;
 
     /**
-     * 该类目节点标记的图形。
-     * 使用自定义的 Symbol 枚举
+     * 节点标记图形
      */
     private String symbol;
 
     /**
-     * ECharts 提供的标准标记类型列表
+     * 类目在列表中的下标（注入时设置）
      */
-    private static final List<String> SYMBOL_LIST = Arrays.asList(
-            "circle", "rect", "roundRect", "triangle", "diamond", "pin", "arrow", "none"
-    );
+    private transient int index = 0;
 
     @Override
     public JsonNode toEChartNode() {
         ObjectNode node = MAPPER.createObjectNode();
         node.put("name", name);
-        node.put("symbol", SYMBOL_LIST.contains(symbol) ? symbol : "circle");
+
+        String safeSymbol = SYMBOL_LIST.contains(symbol) ? symbol : "circle";
+        node.put("symbol", safeSymbol);
+
+        node.put("symbolSize", 32);
+
+        ObjectNode itemStyle = MAPPER.createObjectNode();
+        String color = CATEGORY_COLORS.get(index % CATEGORY_COLORS.size());
+        itemStyle.put("color", color);
+        node.set("itemStyle", itemStyle);
+
+        ObjectNode label = MAPPER.createObjectNode();
+        label.put("fontSize", 11);
+        label.put("color", "#333");
+        node.set("label", label);
+
         return node;
+    }
+
+    public void setIndex(int index) {
+        this.index = index;
     }
 }

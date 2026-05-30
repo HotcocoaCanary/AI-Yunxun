@@ -2,8 +2,8 @@
 import './globals.css';
 
 export const metadata = {
-    title: '云巡助手 - AI 智能运维平台',
-    description: '基于 DeepSeek V4 Pro 和 MCP 协议的智能运维助手',
+    title: 'AI-Yunxun 智能图谱助手',
+    description: '基于 MCP 协议和 EChart 的智能图谱问答助手',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

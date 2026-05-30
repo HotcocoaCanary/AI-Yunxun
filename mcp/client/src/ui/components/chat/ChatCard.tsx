@@ -8,10 +8,9 @@ import { mockSessions, type ChatSession } from "@/data/mockHistory";
 import type { Message, ToolInvocation } from "@/types/chat";
 
 const emptyHints = [
-  "帮我分析一下 Python 数据分析的学习路径",
-  "Docker 容器启动后立即退出的排查方法",
-  "设计一个电商系统的 MySQL 表结构",
-  "React 状态管理：Context API vs Zustand",
+  "绘制一下邓超在演艺圈的人物关系",
+  "我想了解一下海贼王世界的人物关系",
+  "Java相关的技术栈，都是什么关系",
 ];
 
 function fmtTime(dateStr: string): string {
@@ -378,7 +377,7 @@ export function ChatCard() {
         <div className="sidebar-header">
           <div className="sidebar-logo">
             <div className="sidebar-logo-icon">AI</div>
-            <div className="sidebar-logo-text">云巡助手</div>
+            <div className="sidebar-logo-text">云寻助手</div>
           </div>
           <div className="sidebar-subtitle">
             智能运维 · MCP 驱动

@@ -22,11 +22,11 @@ public class GraphOption implements EChartModule {
             option.set("title", title.toEChartNode());
         }
 
-        // tooltip: show value directly
-        ObjectNode tooltipNode = MAPPER.createObjectNode();
-        tooltipNode.put("trigger", "item");
-        tooltipNode.put("formatter", "{c}");
-        option.set("tooltip", tooltipNode);
+        ObjectNode tooltip = MAPPER.createObjectNode();
+        tooltip.put("trigger", "item");
+        tooltip.put("confine", true);
+        tooltip.put("formatter", "{b}");
+        option.set("tooltip", tooltip);
 
         ArrayNode seriesList = MAPPER.createArrayNode();
         if (series != null) {

@@ -15,55 +15,92 @@ import mcp.canary.echart.module.EChartModule;
 @Data
 public class GraphSeries implements EChartModule {
 
-    /**
-     * series 类型，固定为 graph
-     */
     private final String type = "graph";
 
-    /**
-     * 布局（force / circular）
-     */
     private String layout;
 
-    /**
-     * 节点
-     */
     private List<GraphNode> nodes;
 
-    /**
-     * 边
-     */
     private List<GraphEdge> edges;
 
-    /**
-     * 分类
-     */
     private List<GraphCategory> categories;
 
     @Override
     public JsonNode toEChartNode() {
-
         ObjectNode seriesNode = MAPPER.createObjectNode();
 
-        // type: graph
         seriesNode.put("type", type);
-        // layout
+
         String safeLayout = "force";
         if ("circular".equalsIgnoreCase(layout)) {
             safeLayout = "circular";
         }
         seriesNode.put("layout", safeLayout);
-        //
-        seriesNode.put("draggable", true);
-        seriesNode.put("symbolSize", 35);
 
-        // label
+        seriesNode.put("draggable", true);
+        seriesNode.put("roam", true);
+
+        if ("force".equals(safeLayout)) {
+            ObjectNode forceNode = MAPPER.createObjectNode();
+            forceNode.put("repulsion", 280);
+            forceNode.put("gravity", 0.08);
+            forceNode.put("edgeLength", 120);
+            forceNode.put("layoutAnimation", true);
+            seriesNode.set("force", forceNode);
+        }
+
+        int nodeCount = nodes != null ? nodes.size() : 0;
+        int symbolSz = nodeCount > 50 ? 24 : (nodeCount > 20 ? 32 : 42);
+        seriesNode.put("symbolSize", symbolSz);
+
+        ObjectNode itemStyle = MAPPER.createObjectNode();
+        itemStyle.put("borderColor", "#fff");
+        itemStyle.put("borderWidth", 2);
+        itemStyle.put("shadowBlur", 8);
+        itemStyle.put("shadowColor", "rgba(0,0,0,0.15)");
+        seriesNode.set("itemStyle", itemStyle);
+
         ObjectNode labelNode = MAPPER.createObjectNode();
         labelNode.put("show", true);
+        labelNode.put("fontSize", 11);
+        labelNode.put("color", "#333");
+        labelNode.put("position", "bottom");
+        labelNode.put("distance", 8);
         labelNode.put("formatter", "{b}");
         seriesNode.set("label", labelNode);
 
-        // category map
+        ObjectNode lineStyle = MAPPER.createObjectNode();
+        lineStyle.put("color", "source");
+        lineStyle.put("curveness", 0.15);
+        lineStyle.put("opacity", 0.5);
+        lineStyle.put("width", 1.5);
+        seriesNode.set("lineStyle", lineStyle);
+
+        ObjectNode edgeLabel = MAPPER.createObjectNode();
+        edgeLabel.put("show", true);
+        edgeLabel.put("fontSize", 10);
+        edgeLabel.put("color", "#999");
+        edgeLabel.put("formatter", "{c}");
+        seriesNode.set("edgeLabel", edgeLabel);
+
+        ObjectNode emphasisNode = MAPPER.createObjectNode();
+        ObjectNode emphasisLabel = MAPPER.createObjectNode();
+        emphasisLabel.put("fontSize", 14);
+        emphasisLabel.put("fontWeight", "bold");
+        emphasisNode.set("label", emphasisLabel);
+        ObjectNode emphasisItemStyle = MAPPER.createObjectNode();
+        emphasisItemStyle.put("shadowBlur", 16);
+        emphasisItemStyle.put("shadowColor", "rgba(0,0,0,0.3)");
+        emphasisItemStyle.put("borderWidth", 3);
+        emphasisItemStyle.put("borderColor", "#4f46e5");
+        emphasisNode.set("itemStyle", emphasisItemStyle);
+        ObjectNode emphasisLineStyle = MAPPER.createObjectNode();
+        emphasisLineStyle.put("width", 3);
+        emphasisLineStyle.put("opacity", 0.8);
+        emphasisNode.set("lineStyle", emphasisLineStyle);
+        emphasisNode.put("focus", "adjacency");
+        seriesNode.set("emphasis", emphasisNode);
+
         Map<String, Integer> categoryMap = new HashMap<>();
         if (categories != null) {
             for (int i = 0; i < categories.size(); i++) {
@@ -71,37 +108,34 @@ public class GraphSeries implements EChartModule {
             }
         }
 
-        // categories
         ArrayNode categoriesList = MAPPER.createArrayNode();
         if (categories != null) {
-            for (GraphCategory index : categories) {
-                JsonNode res = index.toEChartNode();
-                categoriesList.add(res);
+            for (int i = 0; i < categories.size(); i++) {
+                GraphCategory cat = categories.get(i);
+                cat.setIndex(i);
+                categoriesList.add(cat.toEChartNode());
             }
         }
         seriesNode.set("categories", categoriesList);
 
-        // data: nodes
         ArrayNode dataList = MAPPER.createArrayNode();
         if (nodes != null) {
-            for (GraphNode index : nodes) {
-                ObjectNode nodeJson = (ObjectNode) index.toEChartNode();
-                Integer idx = categoryMap.get(index.getCategoryName());
+            for (GraphNode node : nodes) {
+                ObjectNode nodeJson = (ObjectNode) node.toEChartNode();
+                Integer idx = categoryMap.get(node.getCategoryName());
                 nodeJson.put("category", idx != null ? idx : -1);
                 dataList.add(nodeJson);
             }
         }
         seriesNode.set("data", dataList);
 
-        // links: edges
-        ArrayNode likeList = MAPPER.createArrayNode();
+        ArrayNode linksList = MAPPER.createArrayNode();
         if (edges != null) {
-            for (GraphEdge index : edges) {
-                JsonNode res = index.toEChartNode();
-                likeList.add(res);
+            for (GraphEdge edge : edges) {
+                linksList.add(edge.toEChartNode());
             }
         }
-        seriesNode.set("links", likeList);
+        seriesNode.set("links", linksList);
 
         return seriesNode;
     }

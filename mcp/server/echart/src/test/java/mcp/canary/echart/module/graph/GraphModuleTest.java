@@ -13,9 +13,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 class GraphModuleTest {
 
@@ -34,8 +32,8 @@ class GraphModuleTest {
 
         assertEquals("Demo", node.get("title").get("text").asText());
         assertEquals("item", node.get("tooltip").get("trigger").asText());
-        assertEquals("{c}", node.get("tooltip").get("formatter").asText());
-        assertTrue(node.get("series").isArray());
+        assertEquals("{b}", node.get("tooltip").get("formatter").asText());
+        assertTrue(node.get("tooltip").get("confine").asBoolean());
         assertEquals(1, node.get("series").size());
     }
 
@@ -84,6 +82,23 @@ class GraphModuleTest {
     }
 
     @Test
+    void series_hasForceConfigWhenUsingForceLayout() {
+        GraphSeries series = new GraphSeries();
+        series.setLayout("force");
+        series.setCategories(null);
+        series.setNodes(null);
+        series.setEdges(null);
+
+        JsonNode node = series.toEChartNode();
+
+        assertEquals("force", node.get("layout").asText());
+        assertTrue(node.has("force"));
+        assertEquals(280, node.get("force").get("repulsion").asInt());
+        assertEquals(0.08, node.get("force").get("gravity").asDouble(), 0.001);
+        assertEquals(120, node.get("force").get("edgeLength").asInt());
+    }
+
+    @Test
     void series_handlesNullCollectionsAndCircularLayout() {
         GraphSeries series = new GraphSeries();
         series.setLayout("CIRCULAR");
@@ -94,9 +109,24 @@ class GraphModuleTest {
         JsonNode node = series.toEChartNode();
 
         assertEquals("circular", node.get("layout").asText());
+        assertFalse(node.has("force"));
         assertEquals(0, node.get("categories").size());
         assertEquals(0, node.get("data").size());
         assertEquals(0, node.get("links").size());
+    }
+
+    @Test
+    void series_hasRoamAndEmphasis() {
+        GraphSeries series = new GraphSeries();
+
+        JsonNode node = series.toEChartNode();
+
+        assertTrue(node.get("roam").asBoolean());
+        assertTrue(node.get("draggable").asBoolean());
+        assertTrue(node.has("emphasis"));
+        assertEquals("adjacency", node.get("emphasis").get("focus").asText());
+        assertTrue(node.has("lineStyle"));
+        assertTrue(node.has("edgeLabel"));
     }
 
     @Test
@@ -114,8 +144,9 @@ class GraphModuleTest {
 
         assertEquals("Node1", json.get("name").asText());
         assertEquals(-1, json.get("category").asInt());
-        assertEquals(1, json.get("value").size());
-        assertEquals("age42", json.get("value").get(0).asText());
+        assertTrue(json.has("value"));
+        assertTrue(json.get("value").asText().contains("age: 42"));
+        assertFalse(json.get("value").asText().contains("city"));
     }
 
     @Test
@@ -140,7 +171,28 @@ class GraphModuleTest {
     }
 
     @Test
-    void edge_includesValueWhenPresent() {
+    void edge_withPropertiesFormatsValue() {
+        GraphEdge edge = new GraphEdge();
+        edge.setSource("A");
+        edge.setTarget("B");
+
+        Map<String, Object> props = new LinkedHashMap<>();
+        props.put("weight", 5);
+        props.put("label", "knows");
+        edge.setProperties(props);
+
+        JsonNode json = edge.toEChartNode();
+
+        assertEquals("A", json.get("source").asText());
+        assertEquals("B", json.get("target").asText());
+        assertTrue(json.has("value"));
+        String val = json.get("value").asText();
+        assertTrue(val.contains("weight: 5"));
+        assertTrue(val.contains("label: knows"));
+    }
+
+    @Test
+    void edge_withoutPropertiesUsesNumericValue() {
         GraphEdge edge = new GraphEdge();
         edge.setSource("A");
         edge.setTarget("B");
@@ -150,11 +202,11 @@ class GraphModuleTest {
 
         assertEquals("A", json.get("source").asText());
         assertEquals("B", json.get("target").asText());
-        assertEquals(3.0, json.get("value").asDouble());
+        assertEquals("3.0", json.get("value").asText());
     }
 
     @Test
-    void edge_skipsValueWhenNull() {
+    void edge_skipsValueWhenNullAndNoProperties() {
         GraphEdge edge = new GraphEdge();
         edge.setSource("A");
         edge.setTarget("B");
@@ -162,6 +214,22 @@ class GraphModuleTest {
         JsonNode json = edge.toEChartNode();
 
         assertFalse(json.has("value"));
+    }
+
+    @Test
+    void category_withIndexHasColor() {
+        GraphCategory category = new GraphCategory();
+        category.setName("Group1");
+        category.setSymbol("circle");
+        category.setIndex(2);
+
+        JsonNode json = category.toEChartNode();
+
+        assertEquals("Group1", json.get("name").asText());
+        assertEquals("circle", json.get("symbol").asText());
+        assertTrue(json.has("itemStyle"));
+        assertTrue(json.get("itemStyle").has("color"));
+        assertEquals("#10b981", json.get("itemStyle").get("color").asText());
     }
 
     @Test
@@ -188,12 +256,16 @@ class GraphModuleTest {
     }
 
     @Test
-    void title_setsText() {
+    void title_hasStyledText() {
         GraphTitle title = new GraphTitle();
         title.setText("Title");
 
         JsonNode node = title.toEChartNode();
 
         assertEquals("Title", node.get("text").asText());
+        assertEquals("center", node.get("left").asText());
+        assertTrue(node.has("textStyle"));
+        assertEquals(16, node.get("textStyle").get("fontSize").asInt());
+        assertEquals("bold", node.get("textStyle").get("fontWeight").asText());
     }
 }
